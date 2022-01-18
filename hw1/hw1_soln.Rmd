@@ -47,11 +47,20 @@ Please, do **not** put these data files into Git; they are big. Do **not** copy 
 
 **Solution:**
 ```{bash}
- ls -l /mnt/mimiciv/1.0/core
-
+ls -l /mnt/mimiciv/1.0/core
+ls -l /mnt/mimiciv/1.0/hosp
+ls -l /mnt/mimiciv/1.0/icu
 ```
 
 3. Briefly describe what bash commands `zcat`, `zless`, `zmore`, and `zgrep` do.
+**Solution:**
+* Command `zcat` can be used to view the full contents of a .gz file without 
+uncompressing it.
+* Command `zless` is helpful to view the contents of a .gz file page by page or
+line by line again without uncompressing the file.
+* Command `zmore` is the less powerful analog of zless, and can help view the
+contents of a .gz file page by page without uncompressing it.
+* Command `zgrep` is like grep for a .gz file without uncompressing that file
 
 4. What's the output of following bash script?
     ```{bash, eval=F}
@@ -61,6 +70,80 @@ Please, do **not** put these data files into Git; they are big. Do **not** copy 
       done
     ```
 Display the number of lines in each data file using a similar loop.
+
+**Solution:**
+This is the output of the bash script in Q4 above:
+-rw-r--r--. 1 root root 17208966 Jan  4 21:48 
+/mnt/mimiciv/1.0/core/admissions.csv.gz
+-rw-r--r--. 1 root root 2955582 Jan  4 21:48 
+/mnt/mimiciv/1.0/core/patients.csv.gz
+-rw-r--r--. 1 root root 53014503 Jan  4 21:48 
+/mnt/mimiciv/1.0/core/transfers.csv.gz
+
+Using the script: 
+    ```{bash, eval=F}
+    for datafile in /mnt/mimiciv/1.0/hosp/*.gz
+      do
+        ls -l $datafile
+      done
+    ```
+we are able to grep files that end with .gz from hosp folder displayed below:
+-rw-r--r--. 1 root root 430049 Jan  4 21:51 
+/mnt/mimiciv/1.0/hosp/d_hcpcs.csv.gz
+-rw-r--r--. 1 root root 29531152 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/diagnoses_icd.csv.gz
+-rw-r--r--. 1 root root 863239 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/d_icd_diagnoses.csv.gz
+-rw-r--r--. 1 root root 579998 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/d_icd_procedures.csv.gz
+-rw-r--r--. 1 root root 14898 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/d_labitems.csv.gz
+-rw-r--r--. 1 root root 11684062 Jan  4 21:51 
+/mnt/mimiciv/1.0/hosp/drgcodes.csv.gz
+-rw-r--r--. 1 root root 515763427 Jan  4 21:51 
+/mnt/mimiciv/1.0/hosp/emar.csv.gz
+-rw-r--r--. 1 root root 476252563 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/emar_detail.csv.gz
+-rw-r--r--. 1 root root 2098831 Jan  4 21:51 
+/mnt/mimiciv/1.0/hosp/hcpcsevents.csv.gz
+-rw-r--r--. 1 root root 2091865786 Jan  4 21:50 
+/mnt/mimiciv/1.0/hosp/labevents.csv.gz
+-rw-r--r--. 1 root root 99133381 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/microbiologyevents.csv.gz
+-rw-r--r--. 1 root root 422874088 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/pharmacy.csv.gz
+-rw-r--r--. 1 root root 501381155 Jan  4 21:51 
+/mnt/mimiciv/1.0/hosp/poe.csv.gz
+-rw-r--r--. 1 root root 24020923 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/poe_detail.csv.gz
+-rw-r--r--. 1 root root 367041717 Jan  4 21:49 
+/mnt/mimiciv/1.0/hosp/prescriptions.csv.gz
+-rw-r--r--. 1 root root 7750325 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/procedures_icd.csv.gz
+-rw-r--r--. 1 root root 9565293 Jan  4 21:48 
+/mnt/mimiciv/1.0/hosp/services.csv.gz
+
+similarly, the command below displays files in icu folder:
+    ```{bash, eval=F}
+    for datafile in /mnt/mimiciv/1.0/icu/*.gz
+      do
+        ls -l $datafile
+      done
+    ```
+-rw-r--r--. 1 root root 2350783547 Jan  4 21:54 
+/mnt/mimiciv/1.0/icu/chartevents.csv.gz
+-rw-r--r--. 1 root root 43296273 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/datetimeevents.csv.gz
+-rw-r--r--. 1 root root 55917 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/d_items.csv.gz
+-rw-r--r--. 1 root root 2848628 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/icustays.csv.gz
+-rw-r--r--. 1 root root 352443512 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/inputevents.csv.gz
+-rw-r--r--. 1 root root 37095672 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/outputevents.csv.gz
+-rw-r--r--. 1 root root 20567368 Jan  4 21:52 
+/mnt/mimiciv/1.0/icu/procedureevents.csv.gz
 
 5. Display the first few lines of `admissions.csv.gz`. How many rows are in this data file? How many unique patients (identified by `subject_id`) are in this data file? (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `sort`, `uniq`, `wc`, and so on.)
 
