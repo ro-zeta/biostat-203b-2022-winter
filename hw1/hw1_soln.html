@@ -285,7 +285,10 @@ ls -l /mnt/mimiciv/1.0/icu</code></pre>
 ## -rw-r--r--. 1 root root 53014503 Jan  4 21:48 /mnt/mimiciv/1.0/core/transfers.csv.gz</code></pre>
 <p>Display the number of lines in each data file using a similar loop.</p></li>
 </ol>
-<p><strong>Solution:</strong> This is the output of the bash script in Q4 above: -rw-r–r–. 1 root root 17208966 Jan 4 21:48 /mnt/mimiciv/1.0/core/admissions.csv.gz -rw-r–r–. 1 root root 2955582 Jan 4 21:48 /mnt/mimiciv/1.0/core/patients.csv.gz -rw-r–r–. 1 root root 53014503 Jan 4 21:48 /mnt/mimiciv/1.0/core/transfers.csv.gz</p>
+<p><strong>Solution:</strong> This is the output of the bash script in Q4 above:<br />
+-rw-r–r–. 1 root root 17208966 Jan 4 21:48<br />
+/mnt/mimiciv/1.0/core/admissions.csv.gz<br />
+-rw-r–r–. 1 root root 2955582 Jan 4 21:48 /mnt/mimiciv/1.0/core/patients.csv.gz -rw-r–r–. 1 root root 53014503 Jan 4 21:48 /mnt/mimiciv/1.0/core/transfers.csv.gz</p>
 <p>Using the script:</p>
 <pre><code>```bash
 for datafile in /mnt/mimiciv/1.0/hosp/*.gz
@@ -362,27 +365,34 @@ for datafile in /mnt/mimiciv/1.0/icu/*.gz
 <ol style="list-style-type: decimal">
 <li><p>You and your friend just have finished reading <em>Pride and Prejudice</em> by Jane Austen. Among the four main characters in the book, Elizabeth, Jane, Lydia, and Darcy, your friend thinks that Darcy was the most mentioned. You, however, are certain it was Elizabeth. Obtain the full text of the novel from <a href="http://www.gutenberg.org/cache/epub/42671/pg42671.txt" class="uri">http://www.gutenberg.org/cache/epub/42671/pg42671.txt</a> and save to your local folder.</p>
 <pre class="bash"><code>wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt</code></pre>
+<p><strong>Solution:</strong> The <code>wget -nc</code> command downloads information from a web page specified. It starts with that web page IP address and since the -nc option was specified the information from that web site will be downloaded only if a file with the name (after the web site there is info on where to store the downloaded information) specified by “/” does not already exist.</p></li>
+</ol>
 <p>Explain what <code>wget -nc</code> does. Do <strong>not</strong> put this text file <code>pg42671.txt</code> in Git. Complete the following loop to tabulate the number of times each of the four characters is mentioned using Linux commands.</p>
-<pre class="bash"><code>wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
+<pre><code>```bash
+wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
 for char in Elizabeth Jane Lydia Darcy
 do
   echo $char:
   # some commands here
-done</code></pre>
-<p><strong>Solution:</strong> The <code>wget -nc</code> command</p></li>
+done
+```</code></pre>
+<ol start="2" style="list-style-type: decimal">
 <li><p>What’s the difference between the following two commands?</p>
 <pre class="bash"><code>echo &#39;hello, world&#39; &gt; test1.txt</code></pre>
 <p>and</p>
-<pre class="bash"><code>echo &#39;hello, world&#39; &gt;&gt; test2.txt</code></pre></li>
+<pre class="bash"><code>echo &#39;hello, world&#39; &gt;&gt; test2.txt</code></pre>
+<p><strong>Solution:</strong> Both commands will create a file with “hello, world” initially, since the file name specified is not in the directory. However, when the files exist, the 1st command will override whatever is in the existing file with ‘hello, world’. Meanwhile, the 2nd command will just add more ‘hello, world’ to the next empty line in the existing text file.</p></li>
 <li><p>Using your favorite text editor (e.g., <code>vi</code>), type the following and save the file as <code>middle.sh</code>:</p>
 <pre class="bash"><code>#!/bin/sh
 # Select lines from the middle of a file.
 # Usage: bash middle.sh filename end_line num_lines
-head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
-<p>Using <code>chmod</code> make the file executable by the owner, and run</p>
-<pre class="bash"><code>./middle.sh pg42671.txt 20 5</code></pre>
-<p>Explain the output. Explain the meaning of <code>&quot;$1&quot;</code>, <code>&quot;$2&quot;</code>, and <code>&quot;$3&quot;</code> in this shell script. Why do we need the first line of the shell script?</p></li>
+head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre></li>
 </ol>
+<p>Using <code>chmod</code> make the file executable by the owner, and run</p>
+<pre><code>```bash
+./middle.sh pg42671.txt 20 5
+```</code></pre>
+<p>Explain the output. Explain the meaning of <code>&quot;$1&quot;</code>, <code>&quot;$2&quot;</code>, and <code>&quot;$3&quot;</code> in this shell script. Why do we need the first line of the shell script? –CURRENTLY PROBLEMATIC: KEEP GETTING AN ERROR ABOUT PERMISSION DENIED??? –CHANGED THE PERMISSION OF BOTH MIDDLE.SH AND .TXT FILE STILL SAME ERROR</p>
 <div id="q5.-more-fun-with-linux" class="section level3">
 <h3>Q5. More fun with Linux</h3>
 <p>Try following commands in Bash and interpret the results: <code>cal</code>, <code>cal 2021</code>, <code>cal 9 1752</code> (anything unusual?), <code>date</code>, <code>hostname</code>, <code>arch</code>, <code>uname -a</code>, <code>uptime</code>, <code>who am i</code>, <code>who</code>, <code>w</code>, <code>id</code>, <code>last | head</code>, <code>echo {con,pre}{sent,fer}{s,ed}</code>, <code>time sleep 5</code>, <code>history | tail</code>.</p>
@@ -440,7 +450,7 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## 24 25 26 27 28 29 30</code></pre>
 <p>It seems like the command <code>cal 9 1752</code> is supposed to show the calendar for September of 1752, but the calendar is missing dates 09/3-09/13 which thows off the rest of the dates.</p>
 <pre class="bash"><code>   date</code></pre>
-<pre><code>## Thu Jan 20 05:03:14 UTC 2022</code></pre>
+<pre><code>## Thu Jan 20 22:17:51 UTC 2022</code></pre>
 <p>The command <code>date</code> prints the current date and time using UTC system.</p>
 <pre class="bash"><code>    hostname</code></pre>
 <pre><code>## biostat-203b-teaching-server</code></pre>
@@ -452,7 +462,7 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 <pre><code>## Linux biostat-203b-teaching-server 3.10.0-1160.49.1.el7.x86_64 #1 SMP Tue Nov 30 15:51:32 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux</code></pre>
 <p>The command <code>uname -a</code> prints system information in the following order: kernel, node name, kernel release, kernel version, the machine name, processor, hardware platform and the operating system.</p>
 <pre class="bash"><code>    uptime </code></pre>
-<pre><code>##  05:03:14 up 17 days,  4:36,  3 users,  load average: 0.07, 0.08, 0.09</code></pre>
+<pre><code>##  22:17:51 up 17 days, 21:51,  3 users,  load average: 0.54, 0.36, 0.23</code></pre>
 <p>The command <code>uptime</code> prints the current time (not PST), how long the system has been running, how many users are currently logged in and the average load.</p>
 <pre class="bash"><code>    who am i</code></pre>
 <p>The command <code>who am i</code> does not do anything.</p>
@@ -462,17 +472,18 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## maschepps pts/6        2022-01-17 19:33 (74.213.228.243)</code></pre>
 <p>The command <code>who</code> prints information about users who are logged in in the following order: uder login names, terminal, the time of user login, and IP addresses</p>
 <pre class="bash"><code>    w</code></pre>
-<pre><code>##  05:03:14 up 17 days,  4:36,  3 users,  load average: 0.07, 0.08, 0.09
+<pre><code>##  22:17:51 up 17 days, 21:51,  3 users,  load average: 0.54, 0.36, 0.23
 ## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
 ## tomokiok pts/1    42.166.94.34.bc. 11Jan22  9days  0.01s  0.01s -bash
-## tomokiok pts/3    42.166.94.34.bc. 10Jan22  9days  1.03s  0.85s ssh -i /home/tomokiokuno0528/.ssh/id_rsa tomokiokuno0528@server.ucla-biostat-203b.com
-## maschepp pts/6    74.213.228.243   Mon19    2days  0.03s  0.03s -bash</code></pre>
+## tomokiok pts/3    42.166.94.34.bc. 10Jan22  9days  1.10s  0.92s ssh -i /home/tomokiokuno0528/.ssh/id_rsa tomokiokuno0528@server.ucla-biostat-203b.com
+## maschepp pts/6    74.213.228.243   Mon19    3days  0.03s  0.03s -bash</code></pre>
 <p>The command <code>w</code> prints the following information about the users currently logged in: their name, the name of their terminal, their IP address, time logged in, time the terminal is idle, time used by all processes, time used by the user’s current process, the current process.</p>
 <pre class="bash"><code>    id </code></pre>
 <pre><code>## uid=1003(rozeta) gid=1005(rozeta) groups=1005(rozeta) context=system_u:system_r:initrc_t:s0</code></pre>
 <p>The command <code>id</code> prints uid and gid, groups, and security context for the (current if not specified) user</p>
 <pre class="bash"><code>    last | head</code></pre>
-<pre><code>## jiahaoti pts/14       104-54-32-28.lig Thu Jan 20 02:14 - 04:59  (02:44)    
+<pre><code>## blei001  pts/7        cpe-76-171-0-146 Thu Jan 20 06:38 - 06:41  (00:02)    
+## jiahaoti pts/14       104-54-32-28.lig Thu Jan 20 02:14 - 04:59  (02:44)    
 ## huazhou  pts/30       149.142.103.91   Wed Jan 19 02:23 - 02:32  (00:09)    
 ## lillyhua pts/20       64.201.127.119   Wed Jan 19 01:13 - 03:56  (02:43)    
 ## lillyhua pts/20       64.201.127.119   Wed Jan 19 01:10 - 01:12  (00:01)    
@@ -480,8 +491,7 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 ## sharonfe pts/19       38.15.211.52     Wed Jan 19 00:20 - 00:52  (00:31)    
 ## yuyuanli pts/18       149.142.103.176  Wed Jan 19 00:20 - 02:01  (01:41)    
 ## inclassd pts/17       149.142.103.176  Wed Jan 19 00:20 - 02:32  (02:11)    
-## jiahaoti pts/16       104-54-32-28.lig Wed Jan 19 00:20 - 02:00  (01:40)    
-## lillyhua pts/14       64.201.127.119   Wed Jan 19 00:10 - 00:11  (00:00)</code></pre>
+## jiahaoti pts/16       104-54-32-28.lig Wed Jan 19 00:20 - 02:00  (01:40)</code></pre>
 <p>The command <code>last | head</code> gets the information about the users logged in and out after the start of the server, then prints only the top 10 of that list</p>
 <pre class="bash"><code>   echo {con,pre}{sent,fer}{s,ed}</code></pre>
 <pre><code>## consents consented confers confered presents presented prefers prefered</code></pre>
@@ -489,8 +499,8 @@ head -n &quot;$2&quot; &quot;$1&quot; | tail -n &quot;$3&quot;</code></pre>
 <pre class="bash"><code>    time sleep 5</code></pre>
 <pre><code>## 
 ## real 0m5.001s
-## user 0m0.000s
-## sys  0m0.001s</code></pre>
+## user 0m0.001s
+## sys  0m0.000s</code></pre>
 <p>The command <code>time sleep 5</code> counts how long the system took to execute the sleep 5 command which in turn made the system “sleep” for 5 seconds. This was depicted in the breakdown by real, user and sys.</p>
 <pre class="bash"><code>    history | tail</code></pre>
 <p>The command <code>history | tail</code> gets the history of all commands execute by the current user since the server was up, and prints the last 10</p>
