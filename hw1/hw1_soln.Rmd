@@ -100,7 +100,6 @@ contents of a .gz file page by page without uncompressing it.
         ls -l $datafile
       done
     ```
-Display the number of lines in each data file using a similar loop.
 
 **Solution:**
 This is the output of the bash script in Q4 above:  
@@ -111,70 +110,25 @@ This is the output of the bash script in Q4 above:
 -rw-r--r--. 1 root root 53014503 Jan  4 21:48 
 /mnt/mimiciv/1.0/core/transfers.csv.gz
 
+Display the number of lines in each data file using a similar loop.  
 Using the script: 
     ```{bash, eval=T}
     for datafile in /mnt/mimiciv/1.0/hosp/*.gz
       do
-        ls -l $datafile
+        wc -l $datafile
       done
     ```
 we are able to grep files that end with .gz from hosp folder displayed below:  
--rw-r--r--. 1 root root 430049 Jan  4 21:51 
-/mnt/mimiciv/1.0/hosp/d_hcpcs.csv.gz  
--rw-r--r--. 1 root root 29531152 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/diagnoses_icd.csv.gz   
--rw-r--r--. 1 root root 863239 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/d_icd_diagnoses.csv.gz  
--rw-r--r--. 1 root root 579998 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/d_icd_procedures.csv.gz  
--rw-r--r--. 1 root root 14898 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/d_labitems.csv.gz  
--rw-r--r--. 1 root root 11684062 Jan  4 21:51 
-/mnt/mimiciv/1.0/hosp/drgcodes.csv.gz  
--rw-r--r--. 1 root root 515763427 Jan  4 21:51 
-/mnt/mimiciv/1.0/hosp/emar.csv.gz  
--rw-r--r--. 1 root root 476252563 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/emar_detail.csv.gz  
--rw-r--r--. 1 root root 2098831 Jan  4 21:51 
-/mnt/mimiciv/1.0/hosp/hcpcsevents.csv.gz  
--rw-r--r--. 1 root root 2091865786 Jan  4 21:50 
-/mnt/mimiciv/1.0/hosp/labevents.csv.gz  
--rw-r--r--. 1 root root 99133381 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/microbiologyevents.csv.gz  
--rw-r--r--. 1 root root 422874088 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/pharmacy.csv.gz  
--rw-r--r--. 1 root root 501381155 Jan  4 21:51 
-/mnt/mimiciv/1.0/hosp/poe.csv.gz   
--rw-r--r--. 1 root root 24020923 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/poe_detail.csv.gz  
--rw-r--r--. 1 root root 367041717 Jan  4 21:49 
-/mnt/mimiciv/1.0/hosp/prescriptions.csv.gz  
--rw-r--r--. 1 root root 7750325 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/procedures_icd.csv.gz  
--rw-r--r--. 1 root root 9565293 Jan  4 21:48 
-/mnt/mimiciv/1.0/hosp/services.csv.gz  
+  
 
 similarly, the command below displays files in icu folder:
     ```{bash, eval=T}
     for datafile in /mnt/mimiciv/1.0/icu/*.gz
       do
-        ls -l $datafile
+        wc -l $datafile
       done
     ```
--rw-r--r--. 1 root root 2350783547 Jan  4 21:54 
-/mnt/mimiciv/1.0/icu/chartevents.csv.gz  
--rw-r--r--. 1 root root 43296273 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/datetimeevents.csv.gz  
--rw-r--r--. 1 root root 55917 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/d_items.csv.gz   
--rw-r--r--. 1 root root 2848628 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/icustays.csv.gz  
--rw-r--r--. 1 root root 352443512 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/inputevents.csv.gz  
--rw-r--r--. 1 root root 37095672 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/outputevents.csv.gz  
--rw-r--r--. 1 root root 20567368 Jan  4 21:52 
-/mnt/mimiciv/1.0/icu/procedureevents.csv.gz  
+
 
 5. Display the first few lines of `admissions.csv.gz`. How many rows are in this
 data file? How many unique patients (identified by `subject_id`) are in this 
@@ -183,19 +137,9 @@ data file? (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `sort`,
 
 **Solution:**
     ```{bash, eval=T}
-   zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | head -5
+   zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | awk -F: '{OFS = ","}{print $1}' | uniq | awk 'END { print NR }' 
     ```
-The output was: 
-10000019,25058216,2129-05-21 19:16:00,2129-05-23 18:30:00,,ELECTIVE,,HOME,Other,
-ENGLISH,,WHITE,,,0  
-10000032,22595853,2180-05-06 22:23:00,2180-05-07 17:15:00,,URGENT,TRANSFER FROM HOSPITAL,HOME,Other,ENGLISH,WIDOWED,WHITE,2180-05-06 19:17:00,2180-05-06 
-23:30:00,0  
-10000032,22841357,2180-06-26 18:27:00,2180-06-27 18:49:00,,EW EMER.,EMERGENCY ROOM,HOME,Medicaid,ENGLISH,WIDOWED,WHITE,2180-06-26 15:54:00,2180-06-26 
-21:31:00,0  
-10000032,25742920,2180-08-05 23:44:00,2180-08-07 17:50:00,,EW EMER.,EMERGENCY ROOM,HOSPICE,Medicaid,ENGLISH,WIDOWED,WHITE,2180-08-05 20:58:00,2180-08-06 
-01:44:00,0  
-10000032,29079034,2180-07-23 12:35:00,2180-07-25 17:55:00,,EW EMER.,EMERGENCY ROOM,HOME,Medicaid,ENGLISH,WIDOWED,WHITE,2180-07-23 05:54:00,2180-07-23 
-14:00:00,0  
+
 
 6. What are the possible values taken by each of the variable `admission_type`, 
 `admission_location`, `insurance`, and `ethnicity`? Also report the count for 
@@ -238,8 +182,6 @@ four characters is mentioned using Linux commands.
       # some commands here
     done
     ```
-
-
 
 2. What's the difference between the following two commands?
     ```{bash eval=FALSE}
@@ -331,7 +273,8 @@ been running, how many users are currently logged in and the average load.
 ```{bash eval=T}
     who am i
 ```    
-The command `who am i` does not do anything.
+The command `who am i` does not output anything because do not own this process
+in RStudio.
 
 ```{bash eval=T}
     who 
@@ -376,6 +319,8 @@ depicted in the breakdown by real, user and sys.
 ```{bash eval=T}
     history | tail
 ```    
-The command `history | tail`  gets the history of all commands execute by the 
-current user since the server was up, and prints the last 10
+The command `history | tail`  is supposed to get the history of all commands 
+executed by the current user since the server was up, and prints the last 10.
+However, there seem to be process ownership problems which cause no output when
+run in RStudio.
 
