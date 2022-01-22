@@ -55,6 +55,10 @@ using the MIMIC-IV data. Display the verification links to your completion
 report and completion certificate here. (Hint: The CITI training takes a couple 
 hours and the PhysioNet credentialing takes a couple days; do not leave it to 
 the last minute.)
+
+**Solution:** 
+Please see link attached below for CITI training and PhysioNet credentialing: <https://www.citiprogram.org/verify/?k49d17c67-fa59-4ca3-b434-24d7a2455181-46642188>
+
 ---
 
 ## Q3. Linux Shell Commands
