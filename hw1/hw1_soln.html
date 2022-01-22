@@ -210,7 +210,8 @@ pre code {
 </div>
 <div id="q2.-data-ethics-training" class="section level2">
 <h2>Q2. Data ethics training</h2>
-<p>This exercise (and later in this course) uses the [MIMIC-IV data] (<a href="https://mimic-iv.mit.edu" class="uri">https://mimic-iv.mit.edu</a>), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <a href="https://mimic.mit.edu/docs/gettingstarted/" class="uri">https://mimic.mit.edu/docs/gettingstarted/</a> to (1) complete the CITI <code>Data or  Specimens Only Research</code> course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.) —</p>
+<p>This exercise (and later in this course) uses the [MIMIC-IV data] (<a href="https://mimic-iv.mit.edu" class="uri">https://mimic-iv.mit.edu</a>), a freely accessible critical care database developed by the MIT Lab for Computational Physiology. Follow the instructions at <a href="https://mimic.mit.edu/docs/gettingstarted/" class="uri">https://mimic.mit.edu/docs/gettingstarted/</a> to (1) complete the CITI <code>Data or  Specimens Only Research</code> course and (2) obtain the PhysioNet credential for using the MIMIC-IV data. Display the verification links to your completion report and completion certificate here. (Hint: The CITI training takes a couple hours and the PhysioNet credentialing takes a couple days; do not leave it to the last minute.)</p>
+<p><strong>Solution:</strong> Please see link attached for CITI training <a href="https://www.citiprogram.org/verify/?w846243ce-8efb-4d96-a4b8-d8f0ab1fca95-46642188" class="uri">https://www.citiprogram.org/verify/?w846243ce-8efb-4d96-a4b8-d8f0ab1fca95-46642188</a>. —</p>
 </div>
 <div id="q3.-linux-shell-commands" class="section level2">
 <h2>Q3. Linux Shell Commands</h2>
@@ -505,7 +506,7 @@ The first line on the shell script <code>#!/bin/bash or #!/bin/sh</code> is know
 ```
 
 ```
-## Sat Jan 22 04:27:04 UTC 2022
+## Sat Jan 22 05:01:38 UTC 2022
 ```</code></pre>
 <p>The command <code>date</code> prints the current date and time using UTC system.</p>
 <pre><code>```bash
@@ -537,7 +538,7 @@ The first line on the shell script <code>#!/bin/bash or #!/bin/sh</code> is know
 ```
 
 ```
-##  04:27:04 up 19 days,  4:00,  4 users,  load average: 0.59, 0.30, 0.35
+##  05:01:39 up 19 days,  4:35,  4 users,  load average: 0.46, 0.31, 0.26
 ```</code></pre>
 <p>The command <code>uptime</code> prints the current time (not PST), how long the system has been running, how many users are currently logged in and the average load.</p>
 <pre><code>```bash
@@ -560,12 +561,12 @@ The first line on the shell script <code>#!/bin/bash or #!/bin/sh</code> is know
 ```
 
 ```
-##  04:27:04 up 19 days,  4:00,  4 users,  load average: 0.59, 0.30, 0.35
+##  05:01:39 up 19 days,  4:35,  4 users,  load average: 0.46, 0.31, 0.26
 ## USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
 ## tomokiok pts/1    42.166.94.34.bc. 11Jan22 11days  0.01s  0.01s -bash
-## tomokiok pts/3    42.166.94.34.bc. 10Jan22 11days  1.27s  1.09s ssh -i /home/tomokiokuno0528/.ssh/id_rsa tomokiokuno0528@server.ucla-biostat-203b.com
-## zixiz    pts/6    s-169-232-191-14 01:13    3:12m  0.01s  0.01s -bash
-## maschepp pts/12   74.213.228.243   04:14   12:00   0.03s  0.03s -bash
+## tomokiok pts/3    42.166.94.34.bc. 10Jan22 11days  1.28s  1.10s ssh -i /home/tomokiokuno0528/.ssh/id_rsa tomokiokuno0528@server.ucla-biostat-203b.com
+## zixiz    pts/6    s-169-232-191-14 01:13    3:47m  0.01s  0.01s -bash
+## maschepp pts/12   74.213.228.243   04:14   46:35   0.03s  0.03s -bash
 ```</code></pre>
 <p>The command <code>w</code> prints the following information about the users currently logged in: their name, the name of their terminal, their IP address, time logged in, time the terminal is idle, time used by all processes, time used by the user’s current process, the current process.</p>
 <pre><code>```bash
@@ -581,6 +582,7 @@ The first line on the shell script <code>#!/bin/bash or #!/bin/sh</code> is know
 ```
 
 ```
+## jiahaoti pts/13       104-54-32-28.lig Sat Jan 22 04:27 - 04:44  (00:17)    
 ## maschepp pts/12       74.213.228.243   Sat Jan 22 04:14   still logged in   
 ## lillyhua pts/15       64.201.127.119   Sat Jan 22 02:48 - 03:40  (00:52)    
 ## lillyhua pts/2        64.201.127.119   Sat Jan 22 02:45 - 02:46  (00:00)    
@@ -589,8 +591,7 @@ The first line on the shell script <code>#!/bin/bash or #!/bin/sh</code> is know
 ## zixiz    pts/24       s-169-232-191-14 Sat Jan 22 00:51 - 00:58  (00:06)    
 ## zixiz    pts/24       s-169-232-191-14 Sat Jan 22 00:44 - 00:45  (00:00)    
 ## zixiz    pts/21       s-169-232-191-14 Sat Jan 22 00:14 - 00:35  (00:20)    
-## yuruidon pts/10       42.166.94.34.bc. Fri Jan 21 21:08 - 22:51  (01:42)    
-## yuruidon pts/2        s-169-232-70-203 Fri Jan 21 21:06 - 22:51  (01:45)
+## yuruidon pts/10       42.166.94.34.bc. Fri Jan 21 21:08 - 22:51  (01:42)
 ```</code></pre>
 <p>The command <code>last | head</code> gets the information about the users logged in and out after the start of the server, then prints only the top 10 of that list</p>
 <pre><code>```bash
