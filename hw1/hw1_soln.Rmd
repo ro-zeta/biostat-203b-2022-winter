@@ -255,7 +255,7 @@ Try following commands in Bash and interpret the results: `cal`, `cal 2021`,
 `echo {con,pre}{sent,fer}{s,ed}`, `time sleep 5`, `history | tail`.  
 
     ```{bash eval=T}
-        cal
+           cal
     ```
 The command  `cal` shows a calendar with the current day marked black.  
 
@@ -272,7 +272,7 @@ September of 1752, but the calendar is missing dates 09/3-09/13 which throws off
 the rest of the dates.  
 
     ```{bash eval=T}
-       date
+        date
     ```    
 The command  `date` prints the current date and time using UTC system.
 
