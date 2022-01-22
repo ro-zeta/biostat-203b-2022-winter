@@ -62,12 +62,13 @@ the last minute.)
 MIMIC-IV. Refer to the documentation <https://mimic.mit.edu/docs/iv/> for 
 details of data files.  
     ```{bash}
-    ls -l /mnt/mimiciv/1.0
+      ls -l /mnt/mimiciv/1.0
     ```
-Please, do **not** put these data files into Git; they are big. Do **not** copy 
-them into your directory. Do **not** decompress the gz data files. These create 
-unnecessary big files on storage and are not big data friendly practices. Just 
-read from the data folder `/mnt/mimiciv/1.0` directly in following exercises. 
+|    Please, do **not** put these data files into Git; they are big. Do **not** 
+copy them into your directory. Do **not** decompress the gz data files. These 
+create unnecessary big files on storage and are not big data friendly practices.
+Just read from the data folder `/mnt/mimiciv/1.0` directly in following 
+exercises.   
 
     Use Bash commands to answer following questions.
 
@@ -76,15 +77,17 @@ files distributed as `.csv.gz` files instead of `.csv` (comma separated values)
 files? Read the page <https://mimic.mit.edu/docs/iv/> to understand what's in 
 each folder.
 
-**Solution:**
-```{bash}
-ls -l /mnt/mimiciv/1.0/core
-ls -l /mnt/mimiciv/1.0/hosp
-ls -l /mnt/mimiciv/1.0/icu
-```
+|  **Solution:**  
+  the data files in the folders are displayed as `.csv.gz` files instead of
+`.csv` since they are compressed versions of .csv files. 
+    ```{bash}
+      ls -l /mnt/mimiciv/1.0/core
+      ls -l /mnt/mimiciv/1.0/hosp
+      ls -l /mnt/mimiciv/1.0/icu
+    ```
 
-3. Briefly describe what bash commands `zcat`, `zless`, `zmore`, and `zgrep` do.
-**Solution:**
+3. Briefly describe what bash commands `zcat`, `zless`, `zmore`, and `zgrep` do.  
+    **Solution:**
 * Command `zcat` can be used to view the full contents of a .gz file without 
 uncompressing it.
 * Command `zless` is helpful to view the contents of a .gz file page by page or
@@ -95,39 +98,36 @@ contents of a .gz file page by page without uncompressing it.
 
 4. What's the output of following bash script?
     ```{bash, eval=T}
-    for datafile in /mnt/mimiciv/1.0/core/*.gz
-      do
-        ls -l $datafile
-      done
+      for datafile in /mnt/mimiciv/1.0/core/*.gz
+        do
+          ls -l $datafile
+        done
     ```
-
-**Solution:**
-This is the output of the bash script in Q4 above:  
--rw-r--r--. 1 root root 17208966 Jan  4 21:48 
+|    **Solution:**  
+    This is the output of the bash script in Q4 above:  
+    -rw-r--r--. 1 root root 17208966 Jan  4 21:48 
 /mnt/mimiciv/1.0/core/admissions.csv.gz   
--rw-r--r--. 1 root root 2955582 Jan  4 21:48 
+    -rw-r--r--. 1 root root 2955582 Jan  4 21:48 
 /mnt/mimiciv/1.0/core/patients.csv.gz   
--rw-r--r--. 1 root root 53014503 Jan  4 21:48 
+    -rw-r--r--. 1 root root 53014503 Jan  4 21:48 
 /mnt/mimiciv/1.0/core/transfers.csv.gz
 
-Display the number of lines in each data file using a similar loop.  
-Using the script: 
+    Display the number of lines in each data file using a similar loop.  
+    Using the script: 
     ```{bash, eval=T}
-    for datafile in /mnt/mimiciv/1.0/hosp/*.gz
-      do
-        wc -l $datafile
-      done
+       for datafile in /mnt/mimiciv/1.0/hosp/*.gz
+          do
+            wc -l $datafile
+          done
     ```
-we are able to grep files that end with .gz from hosp folder displayed below:  
-  
 
 similarly, the command below displays files in icu folder:
-    ```{bash, eval=T}
+```{bash, eval=T}
     for datafile in /mnt/mimiciv/1.0/icu/*.gz
       do
         wc -l $datafile
       done
-    ```
+```
 
 
 5. Display the first few lines of `admissions.csv.gz`. How many rows are in this
@@ -136,42 +136,41 @@ data file? (Hint: combine Linux commands `zcat`, `head`/`tail`, `awk`, `sort`,
 `uniq`, `wc`, and so on.)
 
 **Solution:**
-    ```{bash, eval=T}
+```{bash, eval=T}
   zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 |
-  awk -F, ' {print $1 }' | uniq | awk 'END { print NR }'  
-    ```
+  awk -F, '{ print $1 }' | uniq | awk 'END { print NR }'  
+```
 
 
 6. What are the possible values taken by each of the variable `admission_type`, 
 `admission_location`, `insurance`, and `ethnicity`? Also report the count for 
 each unique value of these variables. (Hint: combine Linux commands `zcat`, 
-`head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)
+`head`/`tail`, `awk`, `uniq -c`, `wc`, and so on.)   
 
 **Solution:**
-
-    ```{bash, eval=F}
+```{bash, eval=T}
    zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-   awk -F, ' {print $6 }' | sort | uniq 
+   awk -F, '{ print $6 }' | sort | uniq 
    
-    ```
+```
 
-    ```{bash, eval=F}
+```{bash, eval=T}
   zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-   awk -F, ' {print $7 }' | sort | uniq 
+   awk -F, '{ print $7 }' | sort | uniq 
    
-    ```
+```
     
-    ```{bash, eval=F}
+```{bash, eval=T}
    zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-   awk -F, ' {print $9 }' | sort | uniq 
+   awk -F, '{ print $9 }' | sort | uniq 
    
-    ```    
+```    
 
-    ```{bash, eval=F}
+```{bash, eval=T}
     zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-   awk -F, ' {print $12 }' | sort | uniq 
+   awk -F, '{ print $12 }' | sort | uniq 
    
-    ```        
+```        
 
 ## Q4. Who's popular in Price and Prejudice
 
@@ -181,9 +180,9 @@ Darcy, your friend thinks that Darcy was the most mentioned. You, however, are
 certain it was Elizabeth. Obtain the full text of the novel from 
 <http://www.gutenberg.org/cache/epub/42671/pg42671.txt> and save to your local 
 folder. 
-    ```{bash, eval=FALSE}
+```{bash, eval=T}
     wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
-    ```
+```
 Explain what `wget -nc` does.   
 **Solution:**
 The `wget -nc` command downloads information from a web page specified. It 
@@ -195,25 +194,24 @@ downloaded information) specified by "/" does not already exist.
 Do **not** put this text file `pg42671.txt` in 
 Git. Complete the following loop to tabulate the number of times each of the 
 four characters is mentioned using Linux commands.
-    ```{bash, eval=FALSE}
+```{bash, eval=T}
     wget -nc http://www.gutenberg.org/cache/epub/42671/pg42671.txt
     for char in Elizabeth Jane Lydia Darcy
     do
-      echo $char >> $char.txt
-      
-      # some commands here
+      echo $char:
+      grep -o -i $char pg42671.txt | wc -l
     done
-    ```
+```
 
 2. What's the difference between the following two commands?
-    ```{bash eval=FALSE}
+```{bash eval=FALSE}
     echo 'hello, world' > test1.txt
-    ```
+```
     and
-    ```{bash eval=FALSE}
+```{bash eval=FALSE}
     echo 'hello, world' >> test2.txt
-    ```
-**Solution:**
+```
+**Solution:**  
 Both commands will create a file with "hello, world" initially, since the file 
 name specified is not in the directory. However, when the files exist, the 1st
 command will override whatever is in the existing file with 'hello, world'.
@@ -222,28 +220,28 @@ line in the existing text file.
 
 3. Using your favorite text editor (e.g., `vi`), type the following and save 
 the file as `middle.sh`:
-    ```{bash eval=FALSE}
+```{bash eval=FALSE}
     #!/bin/sh
     # Select lines from the middle of a file.
     # Usage: bash middle.sh filename end_line num_lines
     head -n "$2" "$1" | tail -n "$3"
-    ```
+```
     
 Using `chmod` make the file executable by the owner, and run 
-    ```{bash eval=T}
+```{bash eval=T}
     ./middle.sh pg42671.txt 20 5
-    ```
+```
 Explain the output. Explain the meaning of `"$1"`, `"$2"`, and `"$3"` in this 
-shell script.   
-**Solution:**
+shell script.     
+**Solution:**  
 In this case `"$2"` is an argument for the middle.sh function specifying the 
 number of lines to read from the beginning of the file and feed into the pipe. 
 Then `"$3"` is another argument that specifies the number of lines to print from
 the end of text that was fed into the pipe. `"$1"` is an argument that specifies
 the name of the file we want to use in the function.
 
-Why do we need the first line of the shell script?  
-**Solution:**. 
+Why do we need the first line of the shell script?    
+**Solution:**   
 The first line on the shell script `#!/bin/bash or #!/bin/sh` is known as 
 ‘she-bang‘(shabang).   
 `/bin/sh` is the system shell and `#!/bin/sh` instructs the program loader to 
@@ -252,8 +250,6 @@ first argument.
 `bin/bash` is the most common shell used and `#!/bin/bash` instructs the program
 loader to use /bin/bash program.
 
---CURRENTLY PROBLEMATIC: KEEP GETTING AN ERROR ABOUT PERMISSION DENIED???
---CHANGED THE PERMISSION OF BOTH MIDDLE.SH AND .TXT FILE STILL SAME ERROR
 
 ### Q5. More fun with Linux
 
@@ -275,7 +271,6 @@ The command  `cal 2021` showed the entire calendar for 2021
 ```{bash eval=T}
     cal 9 1752
 ```    
-
 It seems like the command `cal 9 1752` is supposed to show the calendar for 
 September of 1752, but the calendar is missing dates 09/3-09/13 which thows off 
 the rest of the dates.
@@ -360,5 +355,4 @@ depicted in the breakdown by real, user and sys.
 The command `history | tail`  is supposed to get the history of all commands 
 executed by the current user since the server was up, and prints the last 10.
 However, there seem to be process ownership problems which cause no output when
-run in RStudio.
-
+run in RStudio
