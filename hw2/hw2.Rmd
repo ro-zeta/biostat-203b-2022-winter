@@ -146,12 +146,16 @@ Yes, some `subject_id`s have more than 1 `head_id`.
 prctc %>%
   n_distinct(.$subject_id)
 
+prctc %>%
+  sort(intime, decreasing = F) %>%
+  distinct(subject_id)
+
 n_distinct(prctc$subject_id)
 
-#reading in the data set
-icustays_tble %>%
-  n_distinct(.$subject_id)
- 
+#reading in the data set ###INCORRECT
+icustays_tble <- icustays_tble %>%
+                   sort(intime, decreasing = F) %>%
+                   distinct(subject_id)
 ```
 
 ## Q3. `admission` data
