@@ -142,20 +142,10 @@ Yes, some `subject_id`s have more than 1 `head_id`.
 3. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`.
 
 ```{r}
-#practice small dataset
-prctc %>%
-  n_distinct(.$subject_id)
-
-prctc %>%
-  sort(intime, decreasing = F) %>%
-  distinct(subject_id)
-
-n_distinct(prctc$subject_id)
-
-#reading in the data set ###INCORRECT
 icustays_tble <- icustays_tble %>%
-                   sort(intime, decreasing = F) %>%
-                   distinct(subject_id)
+                   arrange(intime) %>%
+                   distinct(subject_id, .keep_all = T)
+
 ```
 
 ## Q3. `admission` data
@@ -176,17 +166,36 @@ system(
 ###Solution to Q3 Part 1: 
 
 ```{r}
+#COMMENT BEFORE KNITTING
+#using this when skipping first chunks!
+admissions_tidyR <- read_csv("/mnt/mimiciv/1.0/core/admissions.csv.gz")
 #converting the data set imported in Q1 to a tibble
 admissions_tble <- as_tibble( admissions_tidyR)
 ```
 
 ###Solution to Q3 Part 3: 
-2. Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadmi_id`.
-
+2. Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadm_id`.
+```{r}
+admissions_tble <- inner_join(admissions_tble, 
+                   icustays_tble, by = c("subject_id", "hadm_id")) 
+str(admissions_tble)
+```
 
 ###Solution to Q3 Part 3: 
 3. Summarize the following variables by graphics. 
 - admission year  
+```{r}
+admissions_tble 
+admission_year <- year(admissions_tble$admittime)
+hist(admission_year)
+admissions_tble %>% 
+  summarise(
+    count = n(),
+    average_year = mean(admittime)
+  )
+
+```
+
 - admission month  
 - admission month day  
 - admission week day  
@@ -207,9 +216,27 @@ system(
 )
 ```
 
+###Solution to Q4 Part 1: 
 1. Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/core/patients/>) as a tibble `patients_tble` and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
 
+```{r}
+#COMMENT BEFORE KNITTING
+#using this when skipping first chunks!
+patients_tble <- read_csv("/mnt/mimiciv/1.0/core/patients.csv.gz")
+#converting the data set imported in Q1 to a tibble
+patients_tble <- as_tibble( patients_tble)
+patients_tble <- inner_join(patients_tble, icustays_tble, by = c("subject_id")) 
+
+```
+
+
 2. Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
+```{r}
+
+
+```
+
+
 
 ## Q5. Lab results
 
