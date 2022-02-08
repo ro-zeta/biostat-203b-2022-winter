@@ -44,8 +44,8 @@ Which function is fastest? Is there difference in the (default) parsed data type
 
 For later questions, we stick to the tidyverse.
 
-###Solution to Q1: 
-I used the code below to calculate an average read time for functions `read.csv`, `read_csv` and `fread` from 3 experiments. 
+**Solution to Q1:**   
+I used the code below to calculate an average read time for functions `read.csv`, `read_csv` and `fread` from 3 experiments.   
 ```{r}
 #Tibble to store the read times in:
 read_times <- tibble(
@@ -76,14 +76,12 @@ for(i in 1:nrow(read_times)){
   read_times$RT_fread[i] = read_times$ET_fread[i] - read_times$ST_fread[i]
 }
 
-#getting information about the data types:
-str(admissions_baseR)
-str(admissions_tidyR)
-str(admissions_fread)
+# #getting information about the data types:
+# str(admissions_baseR)
+# str(admissions_tidyR)
+# str(admissions_fread)
 
-#removing data sets not used in later questions:
-rm(admissions_baseR)
-rm(admissions_fread)
+
 ```
     The average read time for `read.csv`, `read_csv` and `fread`, respectively, were `r format(mean(read_times$RT_baseR), digits = 2)`,  
 `r format(mean(read_times$RT_tidy), digits = 2)`,  and `r format(mean(read_times$RT_fread), digits = 2)`. On average, tidyverse `read_csv` was faster than the other methods.   
@@ -92,6 +90,12 @@ rm(admissions_fread)
     makes working with dates easier) and they include attributes of the data types, such as specifying if numeric values are integers 
     or doubles, etc. 
 
+Quick clean up before next question:
+```{r}
+rm(admissions_baseR)
+rm(admissions_fread)
+rm(read_times)
+```
 
 ## Q2. ICU stays
 
@@ -107,8 +111,8 @@ system(
 )
 ```
 
-###Solution to Q2 Part 1: 
-1. Import `icustatys.csv.gz` as a tibble `icustays_tble`. 
+1. Import `icustatys.csv.gz` as a tibble `icustays_tble`.  
+**Solution to Q2 Part 1:**      
 ```{r}
 #reading in the data set
 icustays_tble <- read_csv("/mnt/mimiciv/1.0/icu/icustays.csv.gz")
@@ -118,32 +122,23 @@ icustays_tble <- as_tibble(icustays_tble)
 ```
 
 
-###Solution to Q2 Part 2: 
-2. How many unique `subject_id`? Can a `subject_id` have multiple ICU stays? 
+2. How many unique `subject_id`? Can a `subject_id` have multiple ICU stays?  
+**Solution to Q2 Part 2:**
 ```{r}
-#practice small dataset
-prctc <- icustays_tble %>%
-           filter(los>28 & los<30) %>%
-           select(subject_id, hadm_id, stay_id)
-
-prctc %>%
-  n_distinct(.$subject_id)
-
-n_distinct(prctc$subject_id)
-
 #reading in the data set
 unique_ID <- icustays_tble %>%
                   n_distinct(.$subject_id)
 ```
-The number of unique `subject_id`s is `r format(mean(unique_ID), digits = 2)`.
-Yes, some `subject_id`s have more than 1 `head_id`. 
+The number of unique `subject_id`s is `r format(mean(unique_ID), digits = 2)`.  
+Yes, some `subject_id`s have more than 1 `head_id`.   
 
-###Solution to Q2 Part 3: 
-3. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`.
 
+3. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`.  
+**Solution to Q2 Part 3:**.  
 ```{r}
+#To keep only 1st stay: 1) sorted in ascending order, 2) kept 1st stays per ID  
 icustays_tble <- icustays_tble %>%
-                   arrange(intime) %>%
+                   arrange(intime) %>%            
                    distinct(subject_id, .keep_all = T)
 
 ```
@@ -162,44 +157,103 @@ system(
 )
 ```
 
+**Solution to Q3 Part 1:**   
 1. Import `admissions.csv.gz` as a tibble `admissions_tble`.
-###Solution to Q3 Part 1: 
-
 ```{r}
-#COMMENT BEFORE KNITTING
-#using this when skipping first chunks!
-admissions_tidyR <- read_csv("/mnt/mimiciv/1.0/core/admissions.csv.gz")
-#converting the data set imported in Q1 to a tibble
-admissions_tble <- as_tibble( admissions_tidyR)
+admissions_tble <- as_tibble(admissions_tidyR)
+rm(admissions_tidyR)
 ```
 
-###Solution to Q3 Part 3: 
-2. Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadm_id`.
+    
+2. Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadm_id`.  
+**Solution to Q3 Part 2:**  
 ```{r}
-admissions_tble <- inner_join(admissions_tble, 
-                   icustays_tble, by = c("subject_id", "hadm_id")) 
-str(admissions_tble)
+join_keys <- c("subject_id", "hadm_id")
+admissions_tble <- admissions_tble %>%  
+                     inner_join(y = icustays_tble, by = join_keys) 
+#check if there are duplicate columns to remove:
+admissions_tble <- admissions_tble[!duplicated(as.list(admissions_tble))]
+rm(join_keys)
 ```
 
-###Solution to Q3 Part 3: 
-3. Summarize the following variables by graphics. 
+3. Summarize the following variables by graphics.     
+**Solution to Q3 Part 3:**    
 - admission year  
 ```{r}
-admissions_tble 
-admission_year <- year(admissions_tble$admittime)
-hist(admission_year)
-admissions_tble %>% 
-  summarise(
-    count = n(),
-    average_year = mean(admittime)
-  )
+# admission_year <- year(admissions_tble$admittime)
+data_collection_start <-  min(year(icustays_tble$intime))
+data_collection_end <-  max(year(icustays_tble$intime))
 
+library(ggplot2)
+
+admissions_tble %>% 
+  mutate(admission_year = year(admissions_tble$admittime)) %>%  
+  ggplot(aes(admission_year)) +
+  geom_histogram(binwidth = 3, color = "mediumslateblue", fill = "grey96") +
+  scale_x_continuous(breaks = pretty(year(admissions_tble$admittime), n = 10)) +
+  ggtitle("Distribution of Admission Year Variable") +
+  xlab("Deidentified Year") + 
+  ylab("Count") +
+  theme_light() 
 ```
 
-- admission month  
+The initial look at admission year variable using a histogram suggested that this variable must be incorrectly formatted. Based on MIMIC IV description, data were collected 2008-2019. Yet, year variable in the tables range from `r format(data_collection_start, digits = 0)` to 
+`r format(data_collection_end, digits = 0)`. However, additional investigation revealed that this formatting is a de-identification of the year variable to limit the information to a 3-year window which may be revealed later when analyzing the `patients` data set.  
+
+- admission month
+```{r}
+rm(data_collection_start)
+rm(data_collection_end)
+
+admissions_tble %>% 
+  mutate(admission_month = month(admissions_tble$admittime, label = T)) %>% 
+  ggplot(aes(admission_month, fill = admission_month)) +
+  geom_bar() +
+  ggtitle("Admission Month Variable") +
+  xlab("Month") + 
+  ylab("Count") +
+  theme_light()
+```
+
 - admission month day  
+```{r}
+admissions_tble %>% 
+  mutate(month_day = mday(admissions_tble$admittime)) %>% 
+  ggplot(aes(month_day)) +
+  geom_histogram(binwidth = 1, color = "mediumslateblue", fill = "grey96") +
+  scale_x_continuous(breaks = pretty(mday(admissions_tble$admittime), n = 10)) +
+  ggtitle("Day of the Month Variable Occurrance") +
+  xlab("Month Day") + 
+  ylab("Count") +
+  theme_bw()
+```
+
+
 - admission week day  
+```{r}
+admissions_tble %>% 
+  mutate(admission_wday = wday(admissions_tble$admittime, label = T)) %>% 
+  ggplot(aes(admission_wday, fill = admission_wday)) +
+  geom_bar() +
+  ggtitle("Day of the Week Variable Counts") +
+  labs( x = "Week Day", y = "Count", color = "Week Day") +
+  theme_light()
+```
+
+
 - admission hour (anything unusual?)  
+```{r}
+admissions_tble %>% 
+  mutate(admit_hour = hour(admissions_tble$admittime)) %>% 
+  ggplot(aes(admit_hour)) +
+  geom_histogram(binwidth = 1, color = "mediumslateblue", fill = "grey96") +
+  scale_x_continuous(breaks = pretty(hour(admissions_tble$admittime), n = 12)) +
+  ggtitle("Admission Hour Variable Occurrance") +
+  xlab("Hour of the Day (on a 24-hour scale)") + 
+  ylab("Count") +
+  theme_bw()
+```
+There seem to be high number of admissions at hour 0, which would denote midnight.  
 
 
 ## Q4. `patients` data
@@ -218,24 +272,58 @@ system(
 
 ###Solution to Q4 Part 1: 
 1. Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/core/patients/>) as a tibble `patients_tble` and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
-
+**Solution:**  
 ```{r}
-#COMMENT BEFORE KNITTING
-#using this when skipping first chunks!
 patients_tble <- read_csv("/mnt/mimiciv/1.0/core/patients.csv.gz")
-#converting the data set imported in Q1 to a tibble
 patients_tble <- as_tibble( patients_tble)
-patients_tble <- inner_join(patients_tble, icustays_tble, by = c("subject_id")) 
-
+patients_tble <- inner_join(patients_tble, icustays_tble, by = c("subject_id"))
 ```
 
 
 2. Summarize variables `gender` and `anchor_age`, and explain any patterns you see.
 ```{r}
+pct <- patients_tble %>% 
+              group_by(gender) %>% 
+              summarise(pct = format(100*n()/nrow(patients_tble), digits = 2))
 
+patients_tble %>% 
+  ggplot(aes(x = gender, fill = gender)) +
+  geom_bar(width = 0.7) +
+  scale_fill_brewer(palette = "Accent", direction = -1) +
+  ggtitle("Figure 4A. Gender of Admitted Patients") +
+  annotate("text", x = "F", y = 3000, label = paste(pct[1,2],"%")) + 
+  annotate("text", x = "M", y = 3000, label = paste(pct[2,2],"%")) + 
+  xlab("Gender") + 
+  ylab("Count") +
+  theme(aspect.ratio=1/2) +
+  theme_light()
+  
+patients_tble %>% 
+  ggplot(aes(x = anchor_age, color = gender)) +
+  geom_histogram(binwidth = 2, fill = "grey97") +
+  scale_color_brewer(palette = "Accent", direction = -1) +
+  ggtitle("Figure 4B. Histogram of the Age Variable") +
+  xlab("Age") + 
+  ylab("Count") +
+  theme_light()
+
+patients_tble %>% 
+  group_by(gender) %>% 
+  ggplot(aes(x = gender, y = anchor_age, fill = gender)) +
+  geom_boxplot(notch = T) +
+  scale_fill_brewer(palette = "Accent", direction = -1) +
+  ggtitle("Figure 4C. Anchor Age by Gender") +
+  xlab("Gender") + 
+  ylab("Anchor Age") +
+  theme_light()
+
+rm(pct)
 
 ```
+From _Figure 4B_
 
+
+Quick clean up before next question:
 
 
 ## Q5. Lab results
@@ -264,12 +352,50 @@ system(
 ```
 
 1. Find how many rows are in `labevents.csv.gz`.
+```{r}
+read_csv(
+        "/mnt/mimiciv/1.0/hosp/labevents.csv.gz", 
+        col_select = 1,
+        lazy = T
+        ) %>%
+  nrow()
+```
 
 2. We are interested in the lab measurements of creatinine (50912), potassium (50971), sodium (50983), chloride (50902), bicarbonate (50882), hematocrit (51221), white blood cell count (51301), glucose (50931), magnesium (50960), and calcium (50893). Retrieve a subset of `labevents.csv.gz` only containing these items for the patients in `icustays_tble` as a tibble `labevents_tble`. 
 
     Hint: `labevents.csv.gz` is a data file too big to be read in by the `read_csv` function in its default setting. Utilize the `col_select` and `lazy` options in the `read_csv` function to reduce the memory burden.
 
+```{r}
+labs_of_interest <- c("50912", "50971", "50983", "50902", "50882", 
+                      "51221", "51301", "50931", "50960", "50893")
+
+labitems_tble <- read_csv(
+                           "/mnt/mimiciv/1.0/hosp/d_labitems.csv.gz", 
+                           col_select = c(1, 2),
+                           lazy = T
+                          )  %>% 
+                   filter(itemid %in% labs_of_interest)
+
+#reading in the data set
+labevents_tble <- read_csv(
+                           "/mnt/mimiciv/1.0/hosp/labevents.csv.gz", 
+                           col_select = c(2, 4, 5, 9, 10, 11, 12, 13, 14),
+                           lazy = T
+                          ) %>%
+                    inner_join(y = labitems_tble, by = itemid)
+                  
+rm(labitems_tble)                    
+```    
+
 3. Further restrict `labevents_tble` to the first lab measurement during the ICU stay. 
+```{r}
+labevents_tble <- labevents_tble %>%
+                    group_by(subject_id)
+                    arrange(subject_id, .group_by = T) %>% 
+                    
+```
+
+
 4. Summarize the lab measurements by appropriate numerics and graphics. 
 
 ## Q6. Vitals from charted events
