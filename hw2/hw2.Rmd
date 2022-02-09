@@ -127,7 +127,7 @@ icustays_tble <- as_tibble(icustays_tble)
 ```{r}
 #reading in the data set
 unique_ID <- icustays_tble %>%
-                  n_distinct(.$subject_id)
+    n_distinct(.$subject_id)
 ```
 The number of unique `subject_id`s is `r format(mean(unique_ID), digits = 2)`.  
 Yes, some `subject_id`s have more than 1 `head_id`.   
@@ -136,10 +136,11 @@ Yes, some `subject_id`s have more than 1 `head_id`.
 3. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`.  
 **Solution to Q2 Part 3:**.  
 ```{r}
+rm(unique_ID)
 #To keep only 1st stay: 1) sorted in ascending order, 2) kept 1st stays per ID  
 icustays_tble <- icustays_tble %>%
-                   arrange(intime) %>%            
-                   distinct(subject_id, .keep_all = T)
+    arrange(intime) %>%            
+    distinct(subject_id, .keep_all = T)
 
 ```
 
@@ -170,7 +171,7 @@ rm(admissions_tidyR)
 ```{r}
 join_keys <- c("subject_id", "hadm_id")
 admissions_tble <- admissions_tble %>%  
-                     inner_join(y = icustays_tble, by = join_keys) 
+    inner_join(y = icustays_tble, by = join_keys) 
 #check if there are duplicate columns to remove:
 admissions_tble <- admissions_tble[!duplicated(as.list(admissions_tble))]
 rm(join_keys)
@@ -191,7 +192,7 @@ admissions_tble %>%
   ggplot(aes(admission_year)) +
   geom_histogram(binwidth = 3, color = "mediumslateblue", fill = "grey96") +
   scale_x_continuous(breaks = pretty(year(admissions_tble$admittime), n = 10)) +
-  ggtitle("Distribution of Admission Year Variable") +
+  ggtitle("Figure 3A. Distribution of Admission Year Variable") +
   xlab("Deidentified Year") + 
   ylab("Count") +
   theme_light() 
@@ -209,7 +210,7 @@ admissions_tble %>%
   mutate(admission_month = month(admissions_tble$admittime, label = T)) %>% 
   ggplot(aes(admission_month, fill = admission_month)) +
   geom_bar() +
-  ggtitle("Admission Month Variable") +
+  ggtitle("Figure 3B. Admission Month Variable") +
   xlab("Month") + 
   ylab("Count") +
   theme_light()
@@ -222,7 +223,7 @@ admissions_tble %>%
   ggplot(aes(month_day)) +
   geom_histogram(binwidth = 1, color = "mediumslateblue", fill = "grey96") +
   scale_x_continuous(breaks = pretty(mday(admissions_tble$admittime), n = 10)) +
-  ggtitle("Day of the Month Variable Occurrance") +
+  ggtitle("Figure 3C. Day of the Month Variable Occurrance") +
   xlab("Month Day") + 
   ylab("Count") +
   theme_bw()
@@ -235,7 +236,7 @@ admissions_tble %>%
   mutate(admission_wday = wday(admissions_tble$admittime, label = T)) %>% 
   ggplot(aes(admission_wday, fill = admission_wday)) +
   geom_bar() +
-  ggtitle("Day of the Week Variable Counts") +
+  ggtitle("Figure 3D. Day of the Week Variable Counts") +
   labs( x = "Week Day", y = "Count", color = "Week Day") +
   theme_light()
 ```
@@ -248,12 +249,12 @@ admissions_tble %>%
   ggplot(aes(admit_hour)) +
   geom_histogram(binwidth = 1, color = "mediumslateblue", fill = "grey96") +
   scale_x_continuous(breaks = pretty(hour(admissions_tble$admittime), n = 12)) +
-  ggtitle("Admission Hour Variable Occurrance") +
+  ggtitle("Figure 3E. Admission Hour Variable Occurrance") +
   xlab("Hour of the Day (on a 24-hour scale)") + 
   ylab("Count") +
   theme_bw()
 ```
-There seem to be high number of admissions at hour 0, which would denote midnight.  
+Based on _Figure 3E_ above, there seem to be high number of admissions at hour 0, which would denote midnight. Additionally, there are also large number of admissions at 7am. Using my limited domain knowledge in hospital shift scheduling, I assume these seemingly increased admissions are actually a result of shift change. At 7am new shift begins, thus, admissions staff who start their day at 7am may be entering the data for patients admitted during the previous night if the staff before them got too busy with other tasks.  
 
 
 ## Q4. `patients` data
@@ -378,25 +379,84 @@ labitems_tble <- read_csv(
 
 #reading in the data set
 labevents_tble <- read_csv(
-                           "/mnt/mimiciv/1.0/hosp/labevents.csv.gz", 
-                           col_select = c(2, 4, 5, 9, 10, 11, 12, 13, 14),
-                           lazy = T
-                          ) %>%
-                    inner_join(y = labitems_tble, by = itemid)
-                  
-rm(labitems_tble)                    
+    "/mnt/mimiciv/1.0/hosp/labevents_filtered_itemid.csv.gz") %>%
+      inner_join(y = labitems_tble, by = "itemid") %>% 
+      inner_join(y = icustays_tble, by = "subject_id") %>% 
+      select(-los)
+
+rm(labitems_tble)
+rm(labs_of_interest)
 ```    
 
 3. Further restrict `labevents_tble` to the first lab measurement during the ICU stay. 
 ```{r}
 labevents_tble <- labevents_tble %>%
-                    group_by(subject_id)
-                    arrange(subject_id, .group_by = T) %>% 
-                    
+   group_by(subject_id) %>% 
+   arrange(charttime, .group_by = T) %>% 
+   slice_head(n = 1) %>% 
+   ungroup()
 ```
 
 
 4. Summarize the lab measurements by appropriate numerics and graphics. 
+```{r warning = F}
+lab_tests<-c("bicarbonate", "calcium", "chloride", "creatinine", "glucose", 
+    "hematocrit", "magnesium", "potassium", "sodium", "white blood cell count")
+test_abbrev <-c("Bicarb",  "Calc", "Chlor", "Crt", "Gluc", "Hmt",  "Mag", 
+     "Potas", "Sod", "WBC_Count")
+
+vars_have <- colnames(labevents_tble)
+labevents_tble %>% 
+  mutate(unit_change = (first_careunit == last_careunit)) %>% 
+  ggplot(aes(x = first_careunit, fill = unit_change)) +
+  geom_bar(position = "stack", width = 0.7) +
+  scale_x_discrete(labels = abbreviate) +
+  ggtitle("Figure 5A. First Care Unit Addmitance") +
+  xlab("Care Unit") + 
+  ylab("Count") +
+  theme(aspect.ratio = 1/2) +
+  theme_light()
+
+labevents_tble %>% 
+  ggplot(aes(x = first_careunit, fill = label)) +
+  geom_bar(position = "stack", width = 0.7) +
+  scale_x_discrete(labels = abbreviate) +
+  ggtitle("Figure 5B. Lab Tests Performed in Each Admitting Unit ") +
+  xlab("Admitting Care Unit") + 
+  ylab("Number of Lab Tests") +
+  theme_light()
+
+labevents_tble %>% 
+  ggplot(aes(x = label, y = valuenum, color = label)) +
+  geom_boxplot(notch = T) +
+  scale_x_discrete(labels = test_abbrev) +
+  ggtitle("Figure 5C. Test Results Based on the Type of Test") +
+  xlab("Test Type") + 
+  ylab("Result Values") +
+  theme_light() 
+
+
+labevents_tble %>% 
+  select(subject_id, itemid, valuenum, first_careunit, last_careunit) %>% 
+  pivot_wider(names_from = itemid, values_from = valuenum) %>% 
+  summarize(
+    count = n(),
+    bicarbonate = format(mean(na.omit(`50882`)), digits = 3),
+    calcium = format(mean(na.omit(`50893`)), digits = 3),
+    chloride = format(mean(na.omit(`50902`)), digits = 3),
+    creatinine = format(mean(na.omit(`50912`)), digits = 3),
+    glucose = format(mean(na.omit(`50931`)), digits = 3),
+    hematocrit = format(mean(na.omit(`51221`)), digits = 3),
+    magnesium = format(mean(na.omit(`50960`)), digits = 3),
+    potassium = format(mean(na.omit(`50971`)), digits = 3),
+    sodium = format(mean(na.omit(`50983`)), digits = 3),
+    WBC_count = format(mean(na.omit(`51301`)), digits = 3)
+  )
+
+rm(test_abbrev)
+#rm(labevents_tble)
+```
+
 
 ## Q6. Vitals from charted events
 
@@ -410,6 +470,7 @@ system(
   intern = TRUE
 )
 ```
+
 `d_items.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/icu/d_items/>) is the dictionary for the `itemid` in `chartevents.csv.gz`. 
 ```{r}
 system(
@@ -423,9 +484,102 @@ system(
 
 1. We are interested in the vitals for ICU patients: heart rate (220045), mean non-invasive blood pressure (220181), systolic non-invasive blood pressure (220179), body temperature in Fahrenheit (223761), and respiratory rate (220210). Retrieve a subset of `chartevents.csv.gz` only containing these items for the patients in `icustays_tble` as a tibble `chartevents_tble`.
 
+```{r}
+vitals_of_interest <- c("220045", "220181", "220179", "223761", "220210")
+
+vitals_items <- read_csv("/mnt/mimiciv/1.0/icu/d_items.csv.gz",
+  col_select = c(1, 2, 3, 5, 6)) %>% 
+                 filter(itemid %in% vitals_of_interest)
+
+#reading in the data set
+chartevents_tble <- read_csv( 
+  "/mnt/mimiciv/1.0/icu/chartevents_filtered_itemid.csv.gz") %>%  
+  inner_join(y = vitals_items, by = "itemid") %>% 
+  inner_join(y = icustays_tble, by = c("subject_id", "hadm_id", "stay_id"))
+                    
+rm(vitals_items)
+rm(vitals_of_interest)
+```
+
 2. Further restrict `chartevents_tble` to the first vital measurement during the ICU stay. 
+```{r}
+chartevents_tble <- chartevents_tble %>%
+                      group_by(subject_id) %>% 
+                      arrange(charttime, .group_by = T) %>% 
+                      slice_head(n = 1) %>% 
+                      ungroup()
+```
 
 3. Summarize these vital measurements by appropriate numerics and graphics. 
+```{r}
+# annotate("text", x = "F", y = 3000, label = paste(pct[1,2],"%")) + 
+# annotate("text", x = "M", y = 3000, label = paste(pct[2,2],"%")) +
+
+outlier1 <- max(chartevents_tble$valuenum[
+  which(chartevents_tble$abbreviation == "NBPm")])
+
+chartevents_tble %>% 
+  ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
+  geom_boxplot(notch = T) +
+  ggtitle("Figure 6A. Results for the First Test Performed after Admittance. 
+    Outlier Revealed") +
+  # geom_mark_circle(aes(x0 = "NBPm", y0 = outlier1, r = 3),
+  #             inherit.aes = FALSE) +
+  annotate("text", x = "NBPm", y = outlier1, label ="O", size = 10) + 
+  xlab("Test Type") + 
+  ylab("Result Values") +
+  theme_light() 
+
+chartevents_tble <- chartevents_tble %>% 
+  filter(valuenum != outlier1)
+
+#This code revealed an outler in HR but is not necessary for final document
+# chartevents_tble %>%
+#   ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
+#   geom_boxplot(notch = T) +
+#   ggtitle(
+#     "Figure 6B. Results for the First Test Performed after Admittance. 
+#     NBPm Outlier Removed") +
+#   xlab("Test Type") +
+#   ylab("Result Values") +
+#   theme_light()
+
+outlier2 <- max(chartevents_tble$valuenum[
+  which(chartevents_tble$abbreviation == "HR")])
+
+chartevents_tble <- chartevents_tble %>% 
+  filter(valuenum != outlier2)
+
+chartevents_tble %>% 
+  ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
+  geom_boxplot(notch = T) +
+  ggtitle(
+    "Figure 6B. Results for the First Test Performed after Admittance. 
+    NBPm and HR Outliers Removed") +
+  xlab("Test Type") + 
+  ylab("Result Values") +
+  theme_light() 
+
+chartevents_tble %>% 
+  select(subject_id, itemid, valuenum) %>% 
+  pivot_wider(names_from = itemid, values_from = valuenum) %>% 
+  summarize(
+    count = n(),
+    heart_rate = format(mean(na.omit(`220045`)), digits = 3),
+    mean_blood_pressure = format(mean(na.omit(`220181`)), digits = 3),
+    blood_pressure_systolic = format(mean(na.omit(`220179`)), digits = 3),
+    temperature = format(mean(na.omit(`223761`)), digits = 3),
+    respiratory_rate = format(mean(na.omit(`220210`)), digits = 3)
+  )
+
+#rm(chartevents_tble)
+rm(outlier1)
+rm(outlier2)
+```
+
+Initial plot of test result values _(Fig. 6A)_ revealed an outlier in the Non invasive blood pressure mean values (`r outlier1`, marked with black circle), which is clearly a mistake since it is multiple orders of magnitude higher than the physiological range. Thus, the variable was removed from further analyses. 
+This finding  sparked further analysis of result values, and additional outliers were found. A value of `r outlier2` for the heart rate variable was also removed since it is not physiological for this variable. Values of 0 for the parameters were not deemed as outliers, considering that patients may have been in severe distress. _Figure 6B._ represents the final dataset used for analyses. 
+
 
 ## Q7. Putting things together
 
