@@ -44,7 +44,6 @@ Which function is fastest? Is there difference in the (default) parsed data type
 
 For later questions, we stick to the tidyverse.
 
-**Solution to Q1:**   
 I used the code below to calculate an average read time for functions `read.csv`, `read_csv` and `fread` from 3 experiments.   
 ```{r}
 #Tibble to store the read times in:
@@ -83,15 +82,11 @@ for(i in 1:nrow(read_times)){
 
 
 ```
-    The average read time for `read.csv`, `read_csv` and `fread`, respectively, were `r format(mean(read_times$RT_baseR), digits = 2)`,  
-`r format(mean(read_times$RT_tidy), digits = 2)`,  and `r format(mean(read_times$RT_fread), digits = 2)`. On average, tidyverse `read_csv` was faster than the other methods.   
-    `read.csv` divides data types to character (including dates) or numeric, turning character variables into factors. Meanwhile, 
-    both `read_csv` and `fread` include more detailed information about the data types (i.e. separating dates into POSIX type, which
-    makes working with dates easier) and they include attributes of the data types, such as specifying if numeric values are integers 
-    or doubles, etc. 
+    The average read time for `read.csv`, `read_csv` and `fread`, respectively, were `r format(mean(read_times$RT_baseR), digits = 2)`, `r format(mean(read_times$RT_tidy), digits = 2)`,  and `r format(mean(read_times$RT_fread), digits = 2)`. On average, tidyverse `read_csv` was faster than the other methods.     
+    `read.csv` divides data types to character (including dates) or numeric, turning character variables into factors. Meanwhile, both `read_csv` and `fread` include more detailed information about the data types (i.e. separating dates into POSIX type, which makes working with dates easier) and they include attributes of the data types, such as specifying if numeric values are integers or doubles, etc. 
 
-Quick clean up before next question:
-```{r}
+```{r echo = F}
+#Quick clean up before next question:
 rm(admissions_baseR)
 rm(admissions_fread)
 rm(read_times)
@@ -112,7 +107,6 @@ system(
 ```
 
 1. Import `icustatys.csv.gz` as a tibble `icustays_tble`.  
-**Solution to Q2 Part 1:**      
 ```{r}
 #reading in the data set
 icustays_tble <- read_csv("/mnt/mimiciv/1.0/icu/icustays.csv.gz")
@@ -123,7 +117,6 @@ icustays_tble <- as_tibble(icustays_tble)
 
 
 2. How many unique `subject_id`? Can a `subject_id` have multiple ICU stays?  
-**Solution to Q2 Part 2:**
 ```{r}
 #reading in the data set
 unique_ID <- icustays_tble %>%
@@ -134,7 +127,6 @@ Yes, some `subject_id`s have more than 1 `head_id`.
 
 
 3. For each `subject_id`, let's only keep the first ICU stay in the tibble `icustays_tble`.  
-**Solution to Q2 Part 3:**.  
 ```{r}
 rm(unique_ID)
 #To keep only 1st stay: 1) sorted in ascending order, 2) kept 1st stays per ID  
@@ -158,16 +150,13 @@ system(
 )
 ```
 
-**Solution to Q3 Part 1:**   
 1. Import `admissions.csv.gz` as a tibble `admissions_tble`.
 ```{r}
 admissions_tble <- as_tibble(admissions_tidyR)
 rm(admissions_tidyR)
 ```
 
-    
 2. Let's only keep the admissions that have a match in `icustays_tble` according to `subject_id` and `hadm_id`.  
-**Solution to Q3 Part 2:**  
 ```{r}
 join_keys <- c("subject_id", "hadm_id")
 admissions_tble <- admissions_tble %>%  
@@ -178,7 +167,6 @@ rm(join_keys)
 ```
 
 3. Summarize the following variables by graphics.     
-**Solution to Q3 Part 3:**    
 - admission year  
 ```{r}
 # admission_year <- year(admissions_tble$admittime)
@@ -203,6 +191,7 @@ The initial look at admission year variable using a histogram suggested that thi
 
 - admission month
 ```{r}
+#removing variables not necessary anymore
 rm(data_collection_start)
 rm(data_collection_end)
 
@@ -271,12 +260,10 @@ system(
 )
 ```
 
-###Solution to Q4 Part 1: 
 1. Import `patients.csv.gz` (<https://mimic.mit.edu/docs/iv/modules/core/patients/>) as a tibble `patients_tble` and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
-**Solution:**  
 ```{r}
 patients_tble <- read_csv("/mnt/mimiciv/1.0/core/patients.csv.gz")
-patients_tble <- as_tibble( patients_tble)
+patients_tble <- tibble( patients_tble)
 patients_tble <- inner_join(patients_tble, icustays_tble, by = c("subject_id"))
 ```
 
@@ -321,11 +308,7 @@ patients_tble %>%
 rm(pct)
 
 ```
-From _Figure 4B_
-
-
-Quick clean up before next question:
-
+Based on _Figure 4A_ there seems to be higher number of males admitted overall. _Figure 4B_ further suggests that potentially at all ages there are more males admitted, except  after patients are about 70 years old. This is very interesting, since there are well-known effects of estrogen (female hormones) in protecting the women from many cardio-metabolic conditions. Estrogen levels decline significantly after menapause (at about age 60).Additionally, _Figure 4C_ suggests that the females admitted may be overall at higher age compared to males. However, statistical testing would be necessary to evaluate this hypothesis.
 
 ## Q5. Lab results
 
@@ -435,7 +418,6 @@ labevents_tble %>%
   ylab("Result Values") +
   theme_light() 
 
-
 labevents_tble %>% 
   select(subject_id, itemid, valuenum, first_careunit, last_careunit) %>% 
   pivot_wider(names_from = itemid, values_from = valuenum) %>% 
@@ -512,9 +494,6 @@ chartevents_tble <- chartevents_tble %>%
 
 3. Summarize these vital measurements by appropriate numerics and graphics. 
 ```{r}
-# annotate("text", x = "F", y = 3000, label = paste(pct[1,2],"%")) + 
-# annotate("text", x = "M", y = 3000, label = paste(pct[2,2],"%")) +
-
 outlier1 <- max(chartevents_tble$valuenum[
   which(chartevents_tble$abbreviation == "NBPm")])
 
@@ -522,9 +501,7 @@ chartevents_tble %>%
   ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
   geom_boxplot(notch = T) +
   ggtitle("Figure 6A. Results for the First Test Performed after Admittance. 
-    Outlier Revealed") +
-  # geom_mark_circle(aes(x0 = "NBPm", y0 = outlier1, r = 3),
-  #             inherit.aes = FALSE) +
+                         Outlier Revealed") +
   annotate("text", x = "NBPm", y = outlier1, label ="O", size = 10) + 
   xlab("Test Type") + 
   ylab("Result Values") +
@@ -533,13 +510,13 @@ chartevents_tble %>%
 chartevents_tble <- chartevents_tble %>% 
   filter(valuenum != outlier1)
 
-#This code revealed an outler in HR but is not necessary for final document
+#This code revealed an outler in HR but is not necessary for final graphs
 # chartevents_tble %>%
 #   ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
 #   geom_boxplot(notch = T) +
 #   ggtitle(
 #     "Figure 6B. Results for the First Test Performed after Admittance. 
-#     NBPm Outlier Removed") +
+#      NBPm Outlier Removed") +
 #   xlab("Test Type") +
 #   ylab("Result Values") +
 #   theme_light()
@@ -555,7 +532,7 @@ chartevents_tble %>%
   geom_boxplot(notch = T) +
   ggtitle(
     "Figure 6B. Results for the First Test Performed after Admittance. 
-    NBPm and HR Outliers Removed") +
+               NBPm and HR Outliers Removed") +
   xlab("Test Type") + 
   ylab("Result Values") +
   theme_light() 
@@ -571,13 +548,9 @@ chartevents_tble %>%
     temperature = format(mean(na.omit(`223761`)), digits = 3),
     respiratory_rate = format(mean(na.omit(`220210`)), digits = 3)
   )
-
-#rm(chartevents_tble)
-rm(outlier1)
-rm(outlier2)
 ```
 
-Initial plot of test result values _(Fig. 6A)_ revealed an outlier in the Non invasive blood pressure mean values (`r outlier1`, marked with black circle), which is clearly a mistake since it is multiple orders of magnitude higher than the physiological range. Thus, the variable was removed from further analyses. 
+Initial plot of test result values _(Fig. 6A)_ revealed an outlier in the Non invasive blood pressure mean values (`r outlier1` marked with black circle), which is clearly a mistake since it is multiple orders of magnitude higher than the physiological range. Thus, the variable was removed from further analyses. 
 This finding  sparked further analysis of result values, and additional outliers were found. A value of `r outlier2` for the heart rate variable was also removed since it is not physiological for this variable. Values of 0 for the parameters were not deemed as outliers, considering that patients may have been in severe distress. _Figure 6B._ represents the final dataset used for analyses. 
 
 
@@ -596,15 +569,196 @@ and columns contain at least following variables
 - first vital measurements during ICU stay
 - an indicator variable `thirty_day_mort` whether the patient died within 30 days of hospital admission (30 day mortality)
 
+```{r}
+join_keys <- c("subject_id", "stay_id", "first_careunit")
+mimic_icu_cohort <- admissions_tble %>% 
+  select(-last_careunit, -los, -intime, -outtime) %>% 
+  inner_join(y = patients_tble,  by = join_keys) %>%
+  select(-last_careunit, -los, -intime, -outtime) %>%
+  inner_join(y = labevents_tble, by = join_keys) %>%
+  select( -last_careunit, -intime, -outtime) %>%
+  rename(lab_test_id = itemid) %>%
+  rename(lab_test_name = label) %>%
+  rename(lab_test_result = valuenum) %>%
+  rename(lab_charttime = charttime) %>%
+  inner_join(y = chartevents_tble, by = join_keys) %>%
+  rename(vitals_test_id = itemid) %>%
+  rename(vitals_test_name = label) %>%
+  rename(vitals_test_result = valuenum) %>%
+  rename(vitals_charttime = charttime) %>%
+  mutate(dod = as.Date(dod)) %>% 
+  mutate(outtime = as.POSIXct(outtime)) 
+
+mimic_icu_cohort <- mimic_icu_cohort%>% 
+  mutate(thirty_day_mort = if_else(difftime(mimic_icu_cohort$dod, 
+    mimic_icu_cohort$intime, units = "days")<=30, T, F)) %>% 
+  mutate(thirty_day_mort = if_else(is.na(thirty_day_mort), F, thirty_day_mort))
+
+```
+
 ## Q8. Exploratory data analysis (EDA)
 
 Summarize following information using appropriate numerics or graphs.
 
 - `thirty_day_mort` vs demographic variables (ethnicity, language, insurance, marital_status, gender, age at hospital admission)
+```{r}
+mimic_icu_cohort %>% 
+  mutate(passed_away = (mimic_icu_cohort$thirty_day_mort == T)) %>% 
+  ggplot(aes(x = gender, fill = passed_away)) +
+  geom_bar(position = "stack", width = 0.6) +
+  ggtitle("Patient Gender and Thirty Day Mortality") +
+  xlab("Gender of the Patients in Each Group") + 
+  ylab("Thirty Day Mortality Indication") +
+  theme(aspect.ratio = 1/2) +
+  theme_light()
 
-- `thirty_day_mort` vs first lab measurements
+mimic_icu_cohort %>% 
+  count(gender, thirty_day_mort) %>% 
+  spread(thirty_day_mort, n) 
+
+mimic_icu_cohort %>% 
+  mutate(passed_away = (mimic_icu_cohort$thirty_day_mort == T)) %>% 
+  ggplot(aes(x = ethnicity, fill = passed_away)) +
+  geom_bar(position = "stack", width = 0.6) +
+  ggtitle("Patient Ethnicity and Thirty Day Mortality") +
+  xlab("Ethnicity of the Patients in Each Group") +  #NEED ABBREVIATIONS
+  ylab("Thirty Day Mortality Indication") +
+  theme(aspect.ratio = 1/2) +
+  theme_light() +
+  coord_flip()
+
+mimic_icu_cohort %>% 
+  count(ethnicity, thirty_day_mort) %>% 
+  spread(thirty_day_mort, n)
+
+mimic_icu_cohort %>% 
+  mutate(passed_away = (mimic_icu_cohort$thirty_day_mort == T)) %>% 
+  ggplot(aes(x = language, fill = passed_away)) +
+  geom_bar(position = "stack", width = 0.6) +
+  scale_x_discrete(labels = c("NA", "ENGLISH")) +
+  ggtitle("Language of the Pateint and Thirty Day Mortality Count") +
+  xlab("Language of the Patients in Each Group") + 
+  ylab("Thirty Day Mortality Indication") +
+  theme(aspect.ratio = 1/2) +
+  theme_light()
+
+mimic_icu_cohort %>% 
+  mutate(language = if_else(language=="?","NA", language)) %>% 
+  count(language, thirty_day_mort) %>% 
+  spread(thirty_day_mort, n)
+
+mimic_icu_cohort %>% 
+  mutate(passed_away = (mimic_icu_cohort$thirty_day_mort == T)) %>% 
+  ggplot(aes(x = marital_status, fill = passed_away)) +
+  geom_bar(position = "stack", width = 0.6) +
+  ggtitle("Marital Status of the Pateint and Thirty Day Mortality Count") +
+  xlab("Marital Status of the Patients in Each Group") + 
+  ylab("Thirty Day Mortality Indication") +
+  theme(aspect.ratio = 1/2) +
+  theme_light()
+
+mimic_icu_cohort %>% 
+  count(marital_status, thirty_day_mort) %>% 
+  spread(thirty_day_mort, n)
+
+mimic_icu_cohort %>% 
+  mutate(passed_away = (mimic_icu_cohort$thirty_day_mort == T)) %>% 
+  ggplot(aes(x = insurance, fill = passed_away)) +
+  geom_bar(position = "stack", width = 0.6) +
+  ggtitle("Insurance of the Pateint and Thirty Day Mortality Count") +
+  xlab("Insurance of the Patients in Each Group") + 
+  ylab("Thirty Day Mortality Indication") +
+  theme(aspect.ratio = 1/2) +
+  theme_light()
+
+mimic_icu_cohort %>% 
+  count(insurance, thirty_day_mort) %>% 
+  spread(thirty_day_mort, n)
+
+mimic_icu_cohort %>%
+  group_by(thirty_day_mort) %>%
+  ggplot(aes(x = thirty_day_mort, y = anchor_age, color = gender)) +
+  geom_boxplot(notch = T) +
+  ggtitle("Age Differences in Thirty Day Mortality Rate") +
+  xlab("Mortality Indicator") +
+  ylab("Patient Age at Admission") +
+  theme_light()
+
+age_vs_mortality <- mimic_icu_cohort %>% 
+  group_by(thirty_day_mort) %>%
+  summarise(
+    means = mean(anchor_age),
+    sd = sd(anchor_age)
+    )
+age_vs_mortality
+```
+
+- `thirty_day_mort` vs first lab measurements. 
+```{r warning = F}
+mimic_icu_cohort %>%
+  ggplot(aes(x = lab_test_name, y = lab_test_result, color = thirty_day_mort)) +
+  geom_boxplot(notch = T) +
+  ggtitle("Lab Test Results of Patients and Thirty Day Mortality Rate") +
+  scale_x_discrete(labels = abbreviate) +
+  xlab("Lab Test") +
+  ylab("Lab Test Results") +
+  theme_light()
+
+mimic_icu_cohort %>% 
+  ungroup() %>% 
+  select(stay_id, lab_test_id, lab_test_result, thirty_day_mort) %>% 
+  pivot_wider(names_from = lab_test_id, values_from = lab_test_result) %>% 
+  group_by(thirty_day_mort) %>%
+  summarise(
+    bicarbonate = format(mean(na.omit(`50882`)), digits = 3),
+    calcium = format(mean(na.omit(`50893`)), digits = 3),
+    chloride = format(mean(na.omit(`50902`)), digits = 3),
+    creatinine = format(mean(na.omit(`50912`)), digits = 3),
+    glucose = format(mean(na.omit(`50931`)), digits = 3),
+    hematocrit = format(mean(na.omit(`51221`)), digits = 3),
+    magnesium = format(mean(na.omit(`50960`)), digits = 3),
+    potassium = format(mean(na.omit(`50971`)), digits = 3),
+    sodium = format(mean(na.omit(`50983`)), digits = 3),
+    WBC_count = format(mean(na.omit(`51301`)), digits = 3)
+    ) %>% 
+  print(width = Inf)
+```
 
 - `thirty_day_mort` vs first vital measurements
+```{r warning = F}
+mimic_icu_cohort %>%
+  ggplot(aes(x = vitals_test_name, y = vitals_test_result, color = thirty_day_mort)) +
+  geom_boxplot(notch = T) +
+  scale_x_discrete(labels = abbreviate) +
+  ggtitle("Patient Vital Signs and Thirty Day Mortality Rate") +
+  xlab("Vital Sign Measurements") +
+  ylab("Vital Sign Values (units depend on measurement)") +
+  theme_light()
+  
+mimic_icu_cohort %>% 
+  ungroup() %>% 
+  select(stay_id, vitals_test_id, vitals_test_result, thirty_day_mort) %>% 
+  pivot_wider(names_from = vitals_test_id, values_from = vitals_test_result) %>% 
+  group_by(thirty_day_mort) %>%
+  summarise(
+    heart_rate = format(mean(na.omit(`220045`)), digits = 3),
+    mean_blood_pressure = format(mean(na.omit(`220181`)), digits = 3),
+    blood_pressure_systolic = format(mean(na.omit(`220179`)), digits = 3),
+    temperature = format(mean(na.omit(`223761`)), digits = 3),
+    respiratory_rate = format(mean(na.omit(`220210`)), digits = 3)
+    ) %>% 
+  print(width = Inf)
+```
 
 - `thirty_day_mort` vs first ICU unit
-
+```{r}
+mimic_icu_cohort %>% 
+  ggplot(aes(x = first_careunit, fill = thirty_day_mort)) +
+  geom_bar(position = "stack", width = 0.6) +
+  scale_x_discrete(labels = abbreviate) +
+  ggtitle("First Care Unit of Admittance and Thirty Day Mortality Count") +
+  xlab("Number of Patients in Each Survival Category") + 
+  ylab("First Care Unit") +
+  theme_light() +
+  coord_flip()
+```
