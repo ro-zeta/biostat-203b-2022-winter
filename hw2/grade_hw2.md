@@ -1,6 +1,6 @@
 *Rozeta Avetisyan*
 
-### Overall Grade: 165/180
+### Overall Grade: 160/180
 
 ### Quality of report: 10/10
 
@@ -10,7 +10,7 @@
   
 -   Is the final report in a human readable format html? 
 
-    Yes
+    No. No html format in main branch. `-5`.
   
 -   Is the report prepared as a dynamic document (R markdown) for better reproducibility?
 
