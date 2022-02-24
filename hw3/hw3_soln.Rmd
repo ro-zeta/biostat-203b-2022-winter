@@ -69,6 +69,7 @@ icustays_tble <- tbl(con, "icustays") %>%
   show_query() %>%
   print(width = Inf)
 ```
+
 We only keep the first ICU stay. Following code is kind of a hack, using the `summarise_all(min)` function. It seems that `slice_min()`, `slice_head()`, `distinct(, .keep_all = TRUE)` don't work with `dbplyr`+`bigrquery` at the moment.
 ```{r}
 icustays_tble <- icustays_tble %>% 
@@ -85,39 +86,58 @@ icustays_tble <- icustays_tble %>%
 ```{r}
 admissions_tble <- tbl(con, "admissions") %>%
   show_query() %>%
-  print(width = Inf)
-
-admissions_tble <- admissions_tble %>% 
   left_join(y = icustays_tble, by = "subject_id")
 ```
 
 5. Connect to the `patients` table and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
 ```{r}
 patients_tble <- tbl(con, "patients") %>%
-  show_query() %>%
-  print(width = Inf)
-
-patients_tble <- patients_tble %>% 
+  show_query() %>% 
   left_join(y = icustays_tble, by = "subject_id")
 ```
 
 6. Connect to the `labevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the lab items listed in HW2. 
 ```{r}
-
-# # TODO
-# labevents_tble <- 
+labs_of_interest <- c("50912", "50971", "50983", "50902", "50882", 
+                      "51221", "51301", "50931", "50960", "50893")
+labevents_tble <- tbl(con, "labevents") %>%
+  show_query() %>% 
+  filter(itemid %in% labs_of_interest) %>% 
+  inner_join(y = icustays_tble, by = "subject_id")
+rm(labs_of_interest)
 ```
+
 Only keep the first lab measurements during ICU stay and pivot lab items to become variables/columns.
 ```{r}
-# # TODO
-# labevents_tble <- labevents_tble %>% ...
+labevents_tble <- labevents_tble %>% 
+  select(subject_id, itemid) %>% 
+  group_by(subject_id, itemid) %>% 
+  summarise_all(min) %>%
+  inner_join(labevents_tble, by = c("subject_id", "itemid")) %>%
+  ungroup() %>% 
+  pivot_wider(names_from = itemid, 
+              values_from = valuenum, names_prefix = "lab") %>% 
+  show_query() 
+
+
 ```
 
 7. Connect to `chartevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the chart events listed in HW2.
 ```{r}
+vitals_of_interest <- c("220045", "220181", "220179", "223761", "220210")
+vitals_items <- read_csv("/mnt/mimiciv/1.0/icu/d_items.csv.gz",
+  col_select = c(1, 2, 3, 5, 6)) %>% 
+                 filter(itemid %in% vitals_of_interest)
 # # TODO
-# chartevents_tble <- 
+chartevents_tble <- tbl(con, "chartevents") %>%
+  show_query() %>% 
+  filter(itemid %in% vitals_of_interest) %>% 
+  inner_join(y = icustays_tble, by = "subject_id")
+
+rm(vitals_items)
+rm(vitals_of_interest)
 ```
+
 Only keep the first chart events during ICU stay and pivot chart events to become variables/columns.
 ```{r}
 # # TODO
@@ -136,6 +156,8 @@ if (!dir.exists("mimiciv_shiny")) {
 ```{r}
 # # TODO
 # icu_cohort <- icustays_tble %>% ...
+
+#collect()  !!!
 ```
 
 Close database connection and clear workspace.
