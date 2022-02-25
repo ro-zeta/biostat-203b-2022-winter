@@ -338,11 +338,13 @@ icustays_tble &lt;- tbl(con, &quot;icustays&quot;) %&gt;%
 </ol>
 <pre class="r"><code>admissions_tble &lt;- tbl(con, &quot;admissions&quot;) %&gt;%
   show_query() %&gt;%
-  print(width = Inf)</code></pre>
+  left_join(y = icustays_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;))</code></pre>
 <pre><code>## &lt;SQL&gt;
 ## SELECT *
-## FROM `admissions`
-## # Source:   table&lt;admissions&gt; [?? x 15]
+## FROM `admissions`</code></pre>
+<pre class="r"><code>admissions_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 21]
 ## # Database: BigQueryConnection
 ##    subject_id  hadm_id admittime           dischtime          
 ##         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;             
@@ -380,31 +382,43 @@ icustays_tble &lt;- tbl(con, &quot;icustays&quot;) %&gt;%
 ##  8 Other     ?        &lt;NA&gt;           OTHER                  NA       
 ##  9 Other     ENGLISH  &lt;NA&gt;           UNKNOWN                NA       
 ## 10 Other     ENGLISH  &lt;NA&gt;           UNKNOWN                NA       
-##    edouttime hospital_expire_flag
-##    &lt;dttm&gt;                   &lt;int&gt;
-##  1 NA                           0
-##  2 NA                           0
-##  3 NA                           0
-##  4 NA                           0
-##  5 NA                           0
-##  6 NA                           0
-##  7 NA                           0
-##  8 NA                           0
-##  9 NA                           0
-## 10 NA                           0
+##    edouttime hospital_expire_flag intime stay_id
+##    &lt;dttm&gt;                   &lt;int&gt; &lt;dttm&gt;   &lt;int&gt;
+##  1 NA                           0 NA          NA
+##  2 NA                           0 NA          NA
+##  3 NA                           0 NA          NA
+##  4 NA                           0 NA          NA
+##  5 NA                           0 NA          NA
+##  6 NA                           0 NA          NA
+##  7 NA                           0 NA          NA
+##  8 NA                           0 NA          NA
+##  9 NA                           0 NA          NA
+## 10 NA                           0 NA          NA
+##    first_careunit last_careunit outtime   los
+##    &lt;chr&gt;          &lt;chr&gt;         &lt;dttm&gt;  &lt;dbl&gt;
+##  1 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  2 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  3 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  4 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  5 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  6 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  7 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  8 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  9 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+## 10 &lt;NA&gt;           &lt;NA&gt;          NA         NA
 ## # … with more rows</code></pre>
-<pre class="r"><code>admissions_tble &lt;- admissions_tble %&gt;% 
-  left_join(y = icustays_tble, by = &quot;subject_id&quot;)</code></pre>
 <ol start="5" style="list-style-type: decimal">
 <li>Connect to the <code>patients</code> table and only keep the patients who have a match in <code>icustays_tble</code> (according to <code>subject_id</code>).</li>
 </ol>
 <pre class="r"><code>patients_tble &lt;- tbl(con, &quot;patients&quot;) %&gt;%
-  show_query() %&gt;%
-  print(width = Inf)</code></pre>
+  show_query() %&gt;% 
+  left_join(y = icustays_tble, by = &quot;subject_id&quot;)</code></pre>
 <pre><code>## &lt;SQL&gt;
 ## SELECT *
-## FROM `patients`
-## # Source:   table&lt;patients&gt; [?? x 6]
+## FROM `patients`</code></pre>
+<pre class="r"><code>patients_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 13]
 ## # Database: BigQueryConnection
 ##    subject_id gender anchor_age anchor_year anchor_year_group dod   
 ##         &lt;int&gt; &lt;chr&gt;       &lt;int&gt;       &lt;int&gt; &lt;chr&gt;             &lt;date&gt;
@@ -418,34 +432,592 @@ icustays_tble &lt;- tbl(con, &quot;icustays&quot;) %&gt;%
 ##  8   10942655 M               0        2110 2008 - 2010       NA    
 ##  9   10999598 M               0        2110 2008 - 2010       NA    
 ## 10   11024137 F               0        2110 2008 - 2010       NA    
+##    intime hadm_id stay_id first_careunit last_careunit
+##    &lt;dttm&gt;   &lt;int&gt;   &lt;int&gt; &lt;chr&gt;          &lt;chr&gt;        
+##  1 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  2 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  3 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  4 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  5 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  6 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  7 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  8 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##  9 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+## 10 NA          NA      NA &lt;NA&gt;           &lt;NA&gt;         
+##    outtime   los
+##    &lt;dttm&gt;  &lt;dbl&gt;
+##  1 NA         NA
+##  2 NA         NA
+##  3 NA         NA
+##  4 NA         NA
+##  5 NA         NA
+##  6 NA         NA
+##  7 NA         NA
+##  8 NA         NA
+##  9 NA         NA
+## 10 NA         NA
 ## # … with more rows</code></pre>
-<pre class="r"><code>patients_tble &lt;- patients_tble %&gt;% 
-  left_join(y = icustays_tble, by = &quot;subject_id&quot;)</code></pre>
 <ol start="6" style="list-style-type: decimal">
 <li>Connect to the <code>labevents</code> table and retrieve a subset that only contain subjects who appear in <code>icustays_tble</code> and the lab items listed in HW2.</li>
 </ol>
-<pre class="r"><code># # TODO
-# labevents_tble &lt;- </code></pre>
+<pre class="r"><code>labs_of_interest &lt;- c(50912, 50971, 50983, 50902, 50882, 
+                      51221, 51301, 50931, 50960, 50893)
+labevents_tble &lt;- tbl(con, &quot;labevents&quot;) %&gt;%
+  show_query() %&gt;% 
+  filter(itemid %in% labs_of_interest) %&gt;% 
+  left_join(y = icustays_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;))</code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT *
+## FROM `labevents`</code></pre>
+<pre class="r"><code>labevents_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 21]
+## # Database: BigQueryConnection
+##    labevent_id subject_id  hadm_id specimen_id itemid charttime          
+##          &lt;int&gt;      &lt;int&gt;    &lt;int&gt;       &lt;int&gt;  &lt;int&gt; &lt;dttm&gt;             
+##  1       47867   10003299       NA    61483780  50893 2183-05-20 11:10:00
+##  2       58644   10004322       NA    87754863  51301 2134-09-27 12:30:00
+##  3       72511   10005348 29496232    56146218  50912 2128-09-09 10:50:00
+##  4       95856   10007677 27180483    54512319  50882 2120-11-23 13:39:00
+##  5       96537   10007677 27180483    23515865  50882 2120-12-06 16:00:00
+##  6       96823   10007677 27180483      314261  50882 2120-12-14 08:16:00
+##  7      125251   10010399       NA    18808287  51221 2135-06-06 12:00:00
+##  8      239514   10019003       NA    73109272  51221 2153-10-06 12:50:00
+##  9      253399   10019992 29448565    67938936  50960 2140-09-17 03:48:00
+## 10      259850   10020852       NA    54454443  50931 2164-10-29 12:30:00
+##    storetime           value valuenum valueuom ref_range_lower ref_range_upper
+##    &lt;dttm&gt;              &lt;chr&gt;    &lt;dbl&gt; &lt;chr&gt;              &lt;dbl&gt;           &lt;dbl&gt;
+##  1 2183-05-20 11:54:00 9.7        9.7 mg/dL                8.4            10.3
+##  2 2134-09-27 13:11:00 13.0      13   K/uL                 4              10  
+##  3 2128-09-09 11:30:00 0.8        0.8 mg/dL                0.5             1.2
+##  4 2120-11-23 14:31:00 23        23   mEq/L               22              32  
+##  5 2120-12-06 17:09:00 24        24   mEq/L               22              32  
+##  6 2120-12-14 10:12:00 28        28   mEq/L               22              32  
+##  7 2135-06-06 13:52:00 36.2      36.2 %                   36              48  
+##  8 2153-10-06 13:24:00 33.3      33.3 %                   34              45  
+##  9 2140-09-17 04:57:00 2.1        2.1 mg/dL                1.6             2.6
+## 10 2164-10-29 20:28:00 84        84   mg/dL               70             105  
+##    flag     priority comments intime               stay_id
+##    &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;    &lt;dttm&gt;                 &lt;int&gt;
+##  1 &lt;NA&gt;     STAT     &lt;NA&gt;     NA                        NA
+##  2 abnormal STAT     &lt;NA&gt;     NA                        NA
+##  3 &lt;NA&gt;     STAT     &lt;NA&gt;     NA                        NA
+##  4 &lt;NA&gt;     STAT     &lt;NA&gt;     2120-11-16 23:40:00 34992648
+##  5 &lt;NA&gt;     ROUTINE  &lt;NA&gt;     2120-11-16 23:40:00 34992648
+##  6 &lt;NA&gt;     ROUTINE  &lt;NA&gt;     2120-11-16 23:40:00 34992648
+##  7 &lt;NA&gt;     ROUTINE  &lt;NA&gt;     NA                        NA
+##  8 abnormal STAT     &lt;NA&gt;     NA                        NA
+##  9 &lt;NA&gt;     STAT     &lt;NA&gt;     2140-09-16 21:49:00 32246469
+## 10 &lt;NA&gt;     ROUTINE  &lt;NA&gt;     NA                        NA
+##    first_careunit                                  
+##    &lt;chr&gt;                                           
+##  1 &lt;NA&gt;                                            
+##  2 &lt;NA&gt;                                            
+##  3 &lt;NA&gt;                                            
+##  4 Neuro Surgical Intensive Care Unit (Neuro SICU) 
+##  5 Neuro Surgical Intensive Care Unit (Neuro SICU) 
+##  6 Neuro Surgical Intensive Care Unit (Neuro SICU) 
+##  7 &lt;NA&gt;                                            
+##  8 &lt;NA&gt;                                            
+##  9 Medical/Surgical Intensive Care Unit (MICU/SICU)
+## 10 &lt;NA&gt;                                            
+##    last_careunit                                    outtime                los
+##    &lt;chr&gt;                                            &lt;dttm&gt;               &lt;dbl&gt;
+##  1 &lt;NA&gt;                                             NA                  NA    
+##  2 &lt;NA&gt;                                             NA                  NA    
+##  3 &lt;NA&gt;                                             NA                  NA    
+##  4 Neuro Intermediate                               2120-11-22 18:49:26  5.80 
+##  5 Neuro Intermediate                               2120-11-22 18:49:26  5.80 
+##  6 Neuro Intermediate                               2120-11-22 18:49:26  5.80 
+##  7 &lt;NA&gt;                                             NA                  NA    
+##  8 &lt;NA&gt;                                             NA                  NA    
+##  9 Medical/Surgical Intensive Care Unit (MICU/SICU) 2140-09-17 13:55:44  0.671
+## 10 &lt;NA&gt;                                             NA                  NA    
+## # … with more rows</code></pre>
+<pre class="r"><code>rm(labs_of_interest)</code></pre>
 <p>Only keep the first lab measurements during ICU stay and pivot lab items to become variables/columns.</p>
-<pre class="r"><code># # TODO
-# labevents_tble &lt;- labevents_tble %&gt;% ...</code></pre>
+<pre class="r"><code>labevents_tble &lt;- labevents_tble %&gt;%  
+  group_by(subject_id, itemid) %&gt;%
+  summarise_all(min) %&gt;%
+  select(subject_id, itemid, hadm_id, intime ) %&gt;% 
+  inner_join(labevents_tble, by = c(&quot;subject_id&quot;, 
+                                    &quot;itemid&quot;, &quot;hadm_id&quot;, &quot;intime&quot;)) %&gt;%
+  ungroup() %&gt;% 
+  pivot_wider(names_from = &quot;itemid&quot;, 
+              values_from = &quot;valuenum&quot;, names_prefix = &quot;lab&quot;) %&gt;% 
+  show_query() </code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT `subject_id`, `hadm_id`, `intime`, `labevent_id`, `specimen_id`, `charttime`, `storetime`, `value`, `valueuom`, `ref_range_lower`, `ref_range_upper`, `flag`, `priority`, `comments`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`, MAX(IF(`itemid` = 50902, `valuenum`, NULL)) AS `lab50902`, MAX(IF(`itemid` = 50971, `valuenum`, NULL)) AS `lab50971`, MAX(IF(`itemid` = 50960, `valuenum`, NULL)) AS `lab50960`, MAX(IF(`itemid` = 50912, `valuenum`, NULL)) AS `lab50912`, MAX(IF(`itemid` = 51221, `valuenum`, NULL)) AS `lab51221`, MAX(IF(`itemid` = 50882, `valuenum`, NULL)) AS `lab50882`, MAX(IF(`itemid` = 51301, `valuenum`, NULL)) AS `lab51301`, MAX(IF(`itemid` = 50893, `valuenum`, NULL)) AS `lab50893`, MAX(IF(`itemid` = 50983, `valuenum`, NULL)) AS `lab50983`, MAX(IF(`itemid` = 50931, `valuenum`, NULL)) AS `lab50931`
+## FROM (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`itemid` AS `itemid`, `LHS`.`hadm_id` AS `hadm_id`, `LHS`.`intime` AS `intime`, `labevent_id`, `specimen_id`, `charttime`, `storetime`, `value`, `valuenum`, `valueuom`, `ref_range_lower`, `ref_range_upper`, `flag`, `priority`, `comments`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, `itemid`, `hadm_id`, `intime`
+## FROM (SELECT `subject_id`, `itemid`, MIN(`labevent_id`) AS `labevent_id`, MIN(`hadm_id`) AS `hadm_id`, MIN(`specimen_id`) AS `specimen_id`, MIN(`charttime`) AS `charttime`, MIN(`storetime`) AS `storetime`, MIN(`value`) AS `value`, MIN(`valuenum`) AS `valuenum`, MIN(`valueuom`) AS `valueuom`, MIN(`ref_range_lower`) AS `ref_range_lower`, MIN(`ref_range_upper`) AS `ref_range_upper`, MIN(`flag`) AS `flag`, MIN(`priority`) AS `priority`, MIN(`comments`) AS `comments`, MIN(`intime`) AS `intime`, MIN(`stay_id`) AS `stay_id`, MIN(`first_careunit`) AS `first_careunit`, MIN(`last_careunit`) AS `last_careunit`, MIN(`outtime`) AS `outtime`, MIN(`los`) AS `los`
+## FROM (SELECT `labevent_id`, `LHS`.`subject_id` AS `subject_id`, `LHS`.`hadm_id` AS `hadm_id`, `specimen_id`, `itemid`, `charttime`, `storetime`, `value`, `valuenum`, `valueuom`, `ref_range_lower`, `ref_range_upper`, `flag`, `priority`, `comments`, `intime`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT *
+## FROM `labevents`
+## WHERE (`itemid` IN (50912.0, 50971.0, 50983.0, 50902.0, 50882.0, 51221.0, 51301.0, 50931.0, 50960.0, 50893.0))) `LHS`
+## LEFT JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`intime` AS `intime`, `hadm_id`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, MIN(`intime`) AS `intime`
+## FROM (SELECT `subject_id`, `intime`
+## FROM `icustays`) `q01`
+## GROUP BY `subject_id`) `LHS`
+## LEFT JOIN `icustays` AS `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`hadm_id` = `RHS`.`hadm_id`)
+## ) `q01`
+## GROUP BY `subject_id`, `itemid`) `q02`) `LHS`
+## INNER JOIN (SELECT `labevent_id`, `LHS`.`subject_id` AS `subject_id`, `LHS`.`hadm_id` AS `hadm_id`, `specimen_id`, `itemid`, `charttime`, `storetime`, `value`, `valuenum`, `valueuom`, `ref_range_lower`, `ref_range_upper`, `flag`, `priority`, `comments`, `intime`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT *
+## FROM `labevents`
+## WHERE (`itemid` IN (50912.0, 50971.0, 50983.0, 50902.0, 50882.0, 51221.0, 51301.0, 50931.0, 50960.0, 50893.0))) `LHS`
+## LEFT JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`intime` AS `intime`, `hadm_id`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, MIN(`intime`) AS `intime`
+## FROM (SELECT `subject_id`, `intime`
+## FROM `icustays`) `q01`
+## GROUP BY `subject_id`) `LHS`
+## LEFT JOIN `icustays` AS `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`hadm_id` = `RHS`.`hadm_id`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`itemid` = `RHS`.`itemid` AND `LHS`.`hadm_id` = `RHS`.`hadm_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `q01`
+## GROUP BY `subject_id`, `hadm_id`, `intime`, `labevent_id`, `specimen_id`, `charttime`, `storetime`, `value`, `valueuom`, `ref_range_lower`, `ref_range_upper`, `flag`, `priority`, `comments`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`</code></pre>
+<pre class="r"><code>labevents_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 29]
+## # Database: BigQueryConnection
+##    subject_id  hadm_id intime              labevent_id specimen_id
+##         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;                    &lt;int&gt;       &lt;int&gt;
+##  1   19312476 22746974 2163-10-10 10:14:49   115476094    84615996
+##  2   19436401 27638257 2189-04-19 13:32:04   116898116     9295376
+##  3   19513051 27511948 2161-06-18 12:02:40   117871329    56897313
+##  4   19672845 27439137 2191-11-11 20:07:00   119952957    45485108
+##  5   19778971 22410076 2186-02-07 22:56:00   121247398    17816093
+##  6   19966316 21475500 2120-10-05 17:47:28   123674964    77078487
+##  7   14453078 26595833 2153-03-23 09:41:43    55224274    70597968
+##  8   15324792 21938724 2135-09-25 16:51:00    66113645    37665980
+##  9   11589465 23838325 2179-10-08 13:31:00    19547343    58160977
+## 10   10250007 25898366 2121-06-11 18:25:00     2990624    74862031
+##    charttime           storetime           value valueuom ref_range_lower
+##    &lt;dttm&gt;              &lt;dttm&gt;              &lt;chr&gt; &lt;chr&gt;              &lt;dbl&gt;
+##  1 2163-10-10 12:20:00 2163-10-10 13:26:00 21    mEq/L               22  
+##  2 2189-04-19 21:00:00 2189-04-20 00:32:00 19    mEq/L               22  
+##  3 2161-06-21 06:25:00 2161-06-21 06:48:00 21.9  %                   40  
+##  4 2191-11-20 01:05:00 2191-11-20 02:23:00 104   mEq/L               96  
+##  5 2186-03-04 07:25:00 2186-03-04 08:45:00 8.3   K/uL                 4  
+##  6 2120-10-07 03:18:00 2120-10-07 03:48:00 7.8   K/uL                 4  
+##  7 2153-03-25 04:41:00 2153-03-25 06:32:00 4.1   mEq/L                3.5
+##  8 2135-09-27 18:20:00 2135-09-27 19:19:00 6.9   mEq/L                3.3
+##  9 2179-10-09 06:02:00 2179-10-09 07:48:00 11    mEq/L               22  
+## 10 2121-06-12 01:15:00 2121-06-12 02:15:00 136   mEq/L              135  
+##    ref_range_upper flag     priority comments  stay_id
+##              &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;    &lt;chr&gt;       &lt;int&gt;
+##  1            32   abnormal STAT     &lt;NA&gt;     39971339
+##  2            32   abnormal STAT     &lt;NA&gt;     39606067
+##  3            52   abnormal STAT     &lt;NA&gt;     32592638
+##  4           108   &lt;NA&gt;     STAT     &lt;NA&gt;     38983514
+##  5            11   &lt;NA&gt;     ROUTINE  &lt;NA&gt;     38843011
+##  6            11   &lt;NA&gt;     ROUTINE  &lt;NA&gt;     36273152
+##  7             5.4 &lt;NA&gt;     STAT     ___      34062226
+##  8             5.1 abnormal ROUTINE  ___      38627763
+##  9            32   abnormal STAT     ___      38790981
+## 10           147   &lt;NA&gt;     STAT     &lt;NA&gt;     32820625
+##    first_careunit                                 
+##    &lt;chr&gt;                                          
+##  1 Cardiac Vascular Intensive Care Unit (CVICU)   
+##  2 Coronary Care Unit (CCU)                       
+##  3 Coronary Care Unit (CCU)                       
+##  4 Neuro Surgical Intensive Care Unit (Neuro SICU)
+##  5 Trauma SICU (TSICU)                            
+##  6 Coronary Care Unit (CCU)                       
+##  7 Cardiac Vascular Intensive Care Unit (CVICU)   
+##  8 Medical Intensive Care Unit (MICU)             
+##  9 Trauma SICU (TSICU)                            
+## 10 Surgical Intensive Care Unit (SICU)            
+##    last_careunit                                   outtime               los
+##    &lt;chr&gt;                                           &lt;dttm&gt;              &lt;dbl&gt;
+##  1 Cardiac Vascular Intensive Care Unit (CVICU)    2163-10-15 16:51:04  5.28
+##  2 Coronary Care Unit (CCU)                        2189-04-22 02:16:39  2.53
+##  3 Coronary Care Unit (CCU)                        2161-06-19 15:18:46  1.14
+##  4 Neuro Surgical Intensive Care Unit (Neuro SICU) 2191-11-20 18:37:55  8.94
+##  5 Surgical Intensive Care Unit (SICU)             2186-02-09 14:51:42  1.66
+##  6 Cardiac Vascular Intensive Care Unit (CVICU)    2120-10-08 13:48:41  2.83
+##  7 Cardiac Vascular Intensive Care Unit (CVICU)    2153-03-24 15:11:10  1.23
+##  8 Medical Intensive Care Unit (MICU)              2135-10-08 21:34:05 13.2 
+##  9 Trauma SICU (TSICU)                             2179-10-13 12:58:33  4.98
+## 10 Neuro Surgical Intensive Care Unit (Neuro SICU) 2121-06-27 07:24:52 15.5 
+##    lab50902 lab50971 lab50960 lab50912 lab51221 lab50882 lab51301 lab50893
+##       &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;    &lt;dbl&gt;
+##  1       NA     NA         NA       NA     NA         21     NA         NA
+##  2       NA     NA         NA       NA     NA         19     NA         NA
+##  3       NA     NA         NA       NA     21.9       NA     NA         NA
+##  4      104     NA         NA       NA     NA         NA     NA         NA
+##  5       NA     NA         NA       NA     NA         NA      8.3       NA
+##  6       NA     NA         NA       NA     NA         NA      7.8       NA
+##  7       NA      4.1       NA       NA     NA         NA     NA         NA
+##  8       NA      6.9       NA       NA     NA         NA     NA         NA
+##  9       NA     NA         NA       NA     NA         11     NA         NA
+## 10       NA     NA         NA       NA     NA         NA     NA         NA
+##    lab50983 lab50931
+##       &lt;dbl&gt;    &lt;dbl&gt;
+##  1       NA       NA
+##  2       NA       NA
+##  3       NA       NA
+##  4       NA       NA
+##  5       NA       NA
+##  6       NA       NA
+##  7       NA       NA
+##  8       NA       NA
+##  9       NA       NA
+## 10      136       NA
+## # … with more rows</code></pre>
 <ol start="7" style="list-style-type: decimal">
 <li>Connect to <code>chartevents</code> table and retrieve a subset that only contain subjects who appear in <code>icustays_tble</code> and the chart events listed in HW2.</li>
 </ol>
-<pre class="r"><code># # TODO
-# chartevents_tble &lt;- </code></pre>
+<pre class="r"><code>vitals_of_interest &lt;- c(220045, 220181, 220179, 223761, 220210)
+vitals_items &lt;- tbl(con, &quot;d_items&quot;) %&gt;% 
+  select(1, 2, 3, 5, 6) %&gt;% 
+  filter(itemid %in% vitals_of_interest)
+
+chartevents_tble &lt;- tbl(con, &quot;chartevents&quot;) %&gt;%
+  inner_join(y = vitals_items, by = &quot;itemid&quot;) %&gt;% 
+  left_join(y = icustays_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;, &quot;stay_id&quot;)) %&gt;% 
+  show_query() </code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`hadm_id` AS `hadm_id`, `LHS`.`stay_id` AS `stay_id`, `charttime`, `storetime`, `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `intime`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, `hadm_id`, `stay_id`, `charttime`, `storetime`, `LHS`.`itemid` AS `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `chartevents` AS `LHS`
+## INNER JOIN (SELECT *
+## FROM (SELECT `itemid`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `d_items`) `q01`
+## WHERE (`itemid` IN (220045.0, 220181.0, 220179.0, 223761.0, 220210.0))) `RHS`
+## ON (`LHS`.`itemid` = `RHS`.`itemid`)
+## ) `LHS`
+## LEFT JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`intime` AS `intime`, `hadm_id`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, MIN(`intime`) AS `intime`
+## FROM (SELECT `subject_id`, `intime`
+## FROM `icustays`) `q01`
+## GROUP BY `subject_id`) `LHS`
+## LEFT JOIN `icustays` AS `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`hadm_id` = `RHS`.`hadm_id` AND `LHS`.`stay_id` = `RHS`.`stay_id`)</code></pre>
+<pre class="r"><code>chartevents_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 19]
+## # Database: BigQueryConnection
+##    subject_id  hadm_id  stay_id charttime           storetime           itemid
+##         &lt;int&gt;    &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;               &lt;int&gt;
+##  1   12815857 29915352 33787331 2128-07-31 00:00:00 2128-07-31 00:02:00 223761
+##  2   13404727 24493974 31299804 2128-05-26 18:45:00 2128-05-26 18:52:00 223761
+##  3   13692794 20678151 35653802 2189-12-17 07:00:00 2189-12-17 07:06:00 223761
+##  4   13729279 24054987 39470047 2181-01-16 16:00:00 2181-01-16 16:18:00 223761
+##  5   18240399 20520293 37832135 2128-12-05 19:00:00 2128-12-05 22:43:00 223761
+##  6   19007619 28981881 32369565 2119-12-18 08:00:00 2119-12-18 09:30:00 223761
+##  7   13335237 29435960 33974423 2186-09-24 06:00:00 2186-09-24 05:53:00 223761
+##  8   18470101 28432317 38880620 2131-09-25 13:30:00 2131-09-25 13:33:00 223761
+##  9   19092196 20711265 35998370 2183-11-05 08:00:00 2183-11-05 07:34:00 223761
+## 10   15926151 27344786 33806838 2173-07-24 12:00:00 2173-07-24 12:12:00 223761
+##    value valuenum valueuom warning label                  abbreviation 
+##    &lt;chr&gt;    &lt;dbl&gt; &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;                  &lt;chr&gt;        
+##  1 100.2    100.  °F             1 Temperature Fahrenheit Temperature F
+##  2 99.2      99.2 °F             0 Temperature Fahrenheit Temperature F
+##  3 99.5      99.5 °F             0 Temperature Fahrenheit Temperature F
+##  4 99.3      99.3 °F             0 Temperature Fahrenheit Temperature F
+##  5 97.2      97.2 °F             0 Temperature Fahrenheit Temperature F
+##  6 97.6      97.6 °F             0 Temperature Fahrenheit Temperature F
+##  7 99.8      99.8 °F             0 Temperature Fahrenheit Temperature F
+##  8 98.4      98.4 °F             0 Temperature Fahrenheit Temperature F
+##  9 97.8      97.8 °F             0 Temperature Fahrenheit Temperature F
+## 10 97.9      97.9 °F             0 Temperature Fahrenheit Temperature F
+##    category            unitname intime             
+##    &lt;chr&gt;               &lt;chr&gt;    &lt;dttm&gt;             
+##  1 Routine Vital Signs °F       2128-07-26 23:27:25
+##  2 Routine Vital Signs °F       2128-05-26 05:19:44
+##  3 Routine Vital Signs °F       2189-12-14 12:23:00
+##  4 Routine Vital Signs °F       2181-01-13 20:08:31
+##  5 Routine Vital Signs °F       NA                 
+##  6 Routine Vital Signs °F       NA                 
+##  7 Routine Vital Signs °F       2186-09-22 18:15:00
+##  8 Routine Vital Signs °F       NA                 
+##  9 Routine Vital Signs °F       2183-11-03 07:41:00
+## 10 Routine Vital Signs °F       2173-07-19 18:45:00
+##    first_careunit                                  
+##    &lt;chr&gt;                                           
+##  1 Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  2 Medical Intensive Care Unit (MICU)              
+##  3 Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  4 Trauma SICU (TSICU)                             
+##  5 &lt;NA&gt;                                            
+##  6 &lt;NA&gt;                                            
+##  7 Medical Intensive Care Unit (MICU)              
+##  8 &lt;NA&gt;                                            
+##  9 Medical Intensive Care Unit (MICU)              
+## 10 Surgical Intensive Care Unit (SICU)             
+##    last_careunit                                    outtime               los
+##    &lt;chr&gt;                                            &lt;dttm&gt;              &lt;dbl&gt;
+##  1 Medical/Surgical Intensive Care Unit (MICU/SICU) 2128-08-03 03:41:38  7.18
+##  2 Medical Intensive Care Unit (MICU)               2128-05-28 18:31:50  2.55
+##  3 Medical/Surgical Intensive Care Unit (MICU/SICU) 2189-12-18 15:50:34  4.14
+##  4 Trauma SICU (TSICU)                              2181-01-23 14:25:42  9.76
+##  5 &lt;NA&gt;                                             NA                  NA   
+##  6 &lt;NA&gt;                                             NA                  NA   
+##  7 Medical Intensive Care Unit (MICU)               2186-10-01 02:17:29  8.34
+##  8 &lt;NA&gt;                                             NA                  NA   
+##  9 Medical Intensive Care Unit (MICU)               2183-11-07 01:21:18  3.74
+## 10 Surgical Intensive Care Unit (SICU)              2173-07-26 17:04:34  6.93
+## # … with more rows</code></pre>
+<pre class="r"><code>vitals_items %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 5]
+## # Database: BigQueryConnection
+##   itemid label                                abbreviation  category           
+##    &lt;int&gt; &lt;chr&gt;                                &lt;chr&gt;         &lt;chr&gt;              
+## 1 220210 Respiratory Rate                     RR            Respiratory        
+## 2 220045 Heart Rate                           HR            Routine Vital Signs
+## 3 220179 Non Invasive Blood Pressure systolic NBPs          Routine Vital Signs
+## 4 220181 Non Invasive Blood Pressure mean     NBPm          Routine Vital Signs
+## 5 223761 Temperature Fahrenheit               Temperature F Routine Vital Signs
+##   unitname
+##   &lt;chr&gt;   
+## 1 insp/min
+## 2 bpm     
+## 3 mmHg    
+## 4 mmHg    
+## 5 °F</code></pre>
+<pre class="r"><code>rm(vitals_items)
+rm(vitals_of_interest)</code></pre>
 <p>Only keep the first chart events during ICU stay and pivot chart events to become variables/columns.</p>
 <pre class="r"><code># # TODO
-# chartevents_tble &lt;- chartevents_tble %&gt;% ...</code></pre>
+chartevents_tble &lt;- chartevents_tble %&gt;%  
+  group_by(subject_id, itemid) %&gt;%
+  summarise_all(min) %&gt;%
+  select(subject_id, itemid, hadm_id, intime ) %&gt;% 
+  inner_join(chartevents_tble, by = c(&quot;subject_id&quot;, 
+                                    &quot;itemid&quot;, &quot;hadm_id&quot;, &quot;intime&quot;)) %&gt;%
+  ungroup() %&gt;% 
+  pivot_wider(names_from = &quot;itemid&quot;, 
+              values_from = &quot;valuenum&quot;, names_prefix = &quot;vitals&quot;) %&gt;% 
+  show_query() </code></pre>
+<pre><code>## &lt;SQL&gt;
+## SELECT `subject_id`, `hadm_id`, `intime`, `stay_id`, `charttime`, `storetime`, `value`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `first_careunit`, `last_careunit`, `outtime`, `los`, MAX(IF(`itemid` = 220210, `valuenum`, NULL)) AS `vitals220210`, MAX(IF(`itemid` = 220045, `valuenum`, NULL)) AS `vitals220045`, MAX(IF(`itemid` = 220181, `valuenum`, NULL)) AS `vitals220181`, MAX(IF(`itemid` = 220179, `valuenum`, NULL)) AS `vitals220179`, MAX(IF(`itemid` = 223761, `valuenum`, NULL)) AS `vitals223761`
+## FROM (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`itemid` AS `itemid`, `LHS`.`hadm_id` AS `hadm_id`, `LHS`.`intime` AS `intime`, `stay_id`, `charttime`, `storetime`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, `itemid`, `hadm_id`, `intime`
+## FROM (SELECT `subject_id`, `itemid`, MIN(`hadm_id`) AS `hadm_id`, MIN(`stay_id`) AS `stay_id`, MIN(`charttime`) AS `charttime`, MIN(`storetime`) AS `storetime`, MIN(`value`) AS `value`, MIN(`valuenum`) AS `valuenum`, MIN(`valueuom`) AS `valueuom`, MIN(`warning`) AS `warning`, MIN(`label`) AS `label`, MIN(`abbreviation`) AS `abbreviation`, MIN(`category`) AS `category`, MIN(`unitname`) AS `unitname`, MIN(`intime`) AS `intime`, MIN(`first_careunit`) AS `first_careunit`, MIN(`last_careunit`) AS `last_careunit`, MIN(`outtime`) AS `outtime`, MIN(`los`) AS `los`
+## FROM (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`hadm_id` AS `hadm_id`, `LHS`.`stay_id` AS `stay_id`, `charttime`, `storetime`, `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `intime`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, `hadm_id`, `stay_id`, `charttime`, `storetime`, `LHS`.`itemid` AS `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `chartevents` AS `LHS`
+## INNER JOIN (SELECT *
+## FROM (SELECT `itemid`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `d_items`) `q01`
+## WHERE (`itemid` IN (220045.0, 220181.0, 220179.0, 223761.0, 220210.0))) `RHS`
+## ON (`LHS`.`itemid` = `RHS`.`itemid`)
+## ) `LHS`
+## LEFT JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`intime` AS `intime`, `hadm_id`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, MIN(`intime`) AS `intime`
+## FROM (SELECT `subject_id`, `intime`
+## FROM `icustays`) `q01`
+## GROUP BY `subject_id`) `LHS`
+## LEFT JOIN `icustays` AS `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`hadm_id` = `RHS`.`hadm_id` AND `LHS`.`stay_id` = `RHS`.`stay_id`)
+## ) `q01`
+## GROUP BY `subject_id`, `itemid`) `q02`) `LHS`
+## INNER JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`hadm_id` AS `hadm_id`, `LHS`.`stay_id` AS `stay_id`, `charttime`, `storetime`, `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `intime`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, `hadm_id`, `stay_id`, `charttime`, `storetime`, `LHS`.`itemid` AS `itemid`, `value`, `valuenum`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `chartevents` AS `LHS`
+## INNER JOIN (SELECT *
+## FROM (SELECT `itemid`, `label`, `abbreviation`, `category`, `unitname`
+## FROM `d_items`) `q01`
+## WHERE (`itemid` IN (220045.0, 220181.0, 220179.0, 223761.0, 220210.0))) `RHS`
+## ON (`LHS`.`itemid` = `RHS`.`itemid`)
+## ) `LHS`
+## LEFT JOIN (SELECT `LHS`.`subject_id` AS `subject_id`, `LHS`.`intime` AS `intime`, `hadm_id`, `stay_id`, `first_careunit`, `last_careunit`, `outtime`, `los`
+## FROM (SELECT `subject_id`, MIN(`intime`) AS `intime`
+## FROM (SELECT `subject_id`, `intime`
+## FROM `icustays`) `q01`
+## GROUP BY `subject_id`) `LHS`
+## LEFT JOIN `icustays` AS `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`hadm_id` = `RHS`.`hadm_id` AND `LHS`.`stay_id` = `RHS`.`stay_id`)
+## ) `RHS`
+## ON (`LHS`.`subject_id` = `RHS`.`subject_id` AND `LHS`.`itemid` = `RHS`.`itemid` AND `LHS`.`hadm_id` = `RHS`.`hadm_id` AND `LHS`.`intime` = `RHS`.`intime`)
+## ) `q01`
+## GROUP BY `subject_id`, `hadm_id`, `intime`, `stay_id`, `charttime`, `storetime`, `value`, `valueuom`, `warning`, `label`, `abbreviation`, `category`, `unitname`, `first_careunit`, `last_careunit`, `outtime`, `los`</code></pre>
+<pre class="r"><code>chartevents_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 22]
+## # Database: BigQueryConnection
+##    subject_id  hadm_id intime               stay_id charttime          
+##         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;                 &lt;int&gt; &lt;dttm&gt;             
+##  1   15373800 22806182 2140-08-24 16:01:00 35544579 2140-08-25 00:00:00
+##  2   19536226 26570309 2183-10-10 02:07:24 34683553 2183-10-10 11:00:00
+##  3   15727414 21230188 2155-06-02 13:45:00 33102311 2155-06-04 14:12:00
+##  4   13731396 22652610 2124-07-08 14:41:27 31615656 2124-07-11 23:00:00
+##  5   11708247 28410234 2137-11-14 08:06:52 31718210 2137-11-24 15:00:00
+##  6   13110851 23644202 2170-01-29 00:45:55 36758863 2170-01-29 08:00:00
+##  7   17914766 24743178 2171-06-04 10:32:22 32863488 2171-06-16 00:00:00
+##  8   18580594 24968707 2189-03-17 19:05:58 31744824 2189-03-18 14:00:00
+##  9   16153425 21934257 2197-01-26 17:45:00 34196602 2197-02-05 04:00:00
+## 10   10835819 27759377 2115-01-31 13:30:51 39781184 2115-02-09 16:00:00
+##    storetime           value valueuom warning label      abbreviation
+##    &lt;dttm&gt;              &lt;chr&gt; &lt;chr&gt;      &lt;int&gt; &lt;chr&gt;      &lt;chr&gt;       
+##  1 2140-08-25 00:26:00 95    bpm            0 Heart Rate HR          
+##  2 2183-10-10 11:20:00 66    bpm            0 Heart Rate HR          
+##  3 2155-06-04 15:02:00 88    bpm            0 Heart Rate HR          
+##  4 2124-07-12 00:25:00 102   bpm            0 Heart Rate HR          
+##  5 2137-11-24 15:22:00 106   bpm            0 Heart Rate HR          
+##  6 2170-01-29 08:33:00 73    bpm            0 Heart Rate HR          
+##  7 2171-06-16 00:56:00 110   bpm            0 Heart Rate HR          
+##  8 2189-03-18 15:36:00 80    bpm            0 Heart Rate HR          
+##  9 2197-02-05 04:31:00 104   bpm            0 Heart Rate HR          
+## 10 2115-02-09 16:21:00 88    bpm            0 Heart Rate HR          
+##    category            unitname first_careunit                                  
+##    &lt;chr&gt;               &lt;chr&gt;    &lt;chr&gt;                                           
+##  1 Routine Vital Signs bpm      Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  2 Routine Vital Signs bpm      Cardiac Vascular Intensive Care Unit (CVICU)    
+##  3 Routine Vital Signs bpm      Medical Intensive Care Unit (MICU)              
+##  4 Routine Vital Signs bpm      Cardiac Vascular Intensive Care Unit (CVICU)    
+##  5 Routine Vital Signs bpm      Trauma SICU (TSICU)                             
+##  6 Routine Vital Signs bpm      Surgical Intensive Care Unit (SICU)             
+##  7 Routine Vital Signs bpm      Medical Intensive Care Unit (MICU)              
+##  8 Routine Vital Signs bpm      Medical/Surgical Intensive Care Unit (MICU/SICU)
+##  9 Routine Vital Signs bpm      Surgical Intensive Care Unit (SICU)             
+## 10 Routine Vital Signs bpm      Medical Intensive Care Unit (MICU)              
+##    last_careunit                                    outtime                los
+##    &lt;chr&gt;                                            &lt;dttm&gt;               &lt;dbl&gt;
+##  1 Medical/Surgical Intensive Care Unit (MICU/SICU) 2140-08-25 07:44:20  0.655
+##  2 Cardiac Vascular Intensive Care Unit (CVICU)     2183-10-27 17:46:29 17.7  
+##  3 Medical Intensive Care Unit (MICU)               2155-07-11 14:08:54 39.0  
+##  4 Coronary Care Unit (CCU)                         2124-07-15 18:51:32  7.17 
+##  5 Trauma SICU (TSICU)                              2137-12-15 17:38:08 31.4  
+##  6 Surgical Intensive Care Unit (SICU)              2170-01-29 17:45:06  0.708
+##  7 Medical Intensive Care Unit (MICU)               2171-06-17 22:30:20 13.5  
+##  8 Medical/Surgical Intensive Care Unit (MICU/SICU) 2189-03-23 00:24:25  5.22 
+##  9 Surgical Intensive Care Unit (SICU)              2197-02-09 13:45:06 13.8  
+## 10 Medical Intensive Care Unit (MICU)               2115-02-19 14:53:35 19.1  
+##    vitals220210 vitals220045 vitals220181 vitals220179 vitals223761
+##           &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
+##  1           NA           95           NA           NA           NA
+##  2           NA           66           NA           NA           NA
+##  3           NA           88           NA           NA           NA
+##  4           NA          102           NA           NA           NA
+##  5           NA          106           NA           NA           NA
+##  6           NA           73           NA           NA           NA
+##  7           NA          110           NA           NA           NA
+##  8           NA           80           NA           NA           NA
+##  9           NA          104           NA           NA           NA
+## 10           NA           88           NA           NA           NA
+## # … with more rows</code></pre>
 <ol start="8" style="list-style-type: decimal">
 <li>Put things together. This step is similar to Q7 of HW2. Using one chain of pipes <code>%&gt;%</code> to perform following data wrangling steps: (i) start with the <code>icustays_tble</code> for the first ICU stay of each unique patient, (ii) merge in admissions and patients tables, (iii) keep adults only (age at admission &gt;= 18), (iv) merge in the labevents and chartevents tables, (v) create an indicator for 30-day mortality, (vi) save the final tibble to an <code>icu_cohort.rds</code> R data file in the <code>mimiciv_shiny</code> folder.</li>
 </ol>
 <pre class="r"><code># make a directory mimiciv_shiny
 if (!dir.exists(&quot;mimiciv_shiny&quot;)) {
   dir.create(&quot;mimiciv_shiny&quot;)
-}</code></pre>
+}
+icustays_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 8]
+## # Database: BigQueryConnection
+##    subject_id intime               hadm_id  stay_id first_careunit
+##         &lt;int&gt; &lt;dttm&gt;                 &lt;int&gt;    &lt;int&gt; &lt;chr&gt;         
+##  1   12776735 2200-07-12 00:33:00 20817525 34547665 Neuro Stepdown
+##  2   16256226 2150-12-20 16:09:08 20013290 39289362 Neuro Stepdown
+##  3   12974563 2138-11-13 23:30:01 29618057 32563675 Neuro Stepdown
+##  4   14609218 2174-06-28 21:13:00 20606189 34947848 Neuro Stepdown
+##  5   12687112 2162-05-31 18:08:45 26132667 37445058 Neuro Stepdown
+##  6   18190935 2115-11-12 23:23:32 21137829 34338402 Neuro Stepdown
+##  7   10404210 2161-03-03 18:30:00 22880512 30254828 Neuro Stepdown
+##  8   12552973 2135-09-21 18:12:03 21320643 30261549 Neuro Stepdown
+##  9   14303051 2175-11-20 01:02:00 26559537 30401486 Neuro Stepdown
+## 10   12347959 2140-07-11 17:54:14 22779073 30503984 Neuro Stepdown
+##    last_careunit  outtime               los
+##    &lt;chr&gt;          &lt;dttm&gt;              &lt;dbl&gt;
+##  1 Neuro Stepdown 2200-07-13 16:44:40 1.67 
+##  2 Neuro Stepdown 2150-12-21 14:58:40 0.951
+##  3 Neuro Stepdown 2138-11-15 16:25:19 1.71 
+##  4 Neuro Stepdown 2174-07-05 17:01:32 6.83 
+##  5 Neuro Stepdown 2162-06-04 10:16:13 3.67 
+##  6 Neuro Stepdown 2115-11-15 18:06:26 2.78 
+##  7 Neuro Stepdown 2161-03-05 18:10:31 1.99 
+##  8 Neuro Stepdown 2135-09-23 12:56:46 1.78 
+##  9 Neuro Stepdown 2175-11-21 16:06:17 1.63 
+## 10 Neuro Stepdown 2140-07-19 13:01:05 7.80 
+## # … with more rows</code></pre>
 <pre class="r"><code># # TODO
-# icu_cohort &lt;- icustays_tble %&gt;% ...</code></pre>
+icu_cohort &lt;- icustays_tble %&gt;% 
+  left_join(admissions_tble, by = c(&quot;subject_id&quot;, &quot;hadm_id&quot;))
+
+admissions_tble %&gt;% 
+  print(width = Inf)</code></pre>
+<pre><code>## # Source:   lazy query [?? x 21]
+## # Database: BigQueryConnection
+##    subject_id  hadm_id admittime           dischtime          
+##         &lt;int&gt;    &lt;int&gt; &lt;dttm&gt;              &lt;dttm&gt;             
+##  1   19940860 24902106 2130-12-31 09:19:00 2131-01-22 13:33:00
+##  2   17615674 27014468 2142-11-29 21:16:00 2143-01-13 12:28:00
+##  3   11786836 29132076 2117-05-04 19:28:00 2117-08-17 17:28:00
+##  4   19858751 23670116 2164-08-24 03:26:00 2164-09-05 12:10:00
+##  5   18186739 29454835 2121-07-28 15:25:00 2121-08-23 16:26:00
+##  6   17727602 24085356 2139-09-25 16:08:00 2139-09-30 12:00:00
+##  7   18863892 26824106 2181-10-21 01:06:00 2181-10-24 12:30:00
+##  8   19931040 27261054 2138-11-28 15:22:00 2138-12-11 13:45:00
+##  9   10831754 23383102 2122-04-29 13:11:00 2122-05-11 19:18:00
+## 10   16050270 23791681 2161-07-01 21:13:00 2161-07-05 15:45:00
+##    deathtime admission_type admission_location discharge_location
+##    &lt;dttm&gt;    &lt;chr&gt;          &lt;chr&gt;              &lt;chr&gt;             
+##  1 NA        URGENT         &lt;NA&gt;               HOME HEALTH CARE  
+##  2 NA        URGENT         &lt;NA&gt;               HOME              
+##  3 NA        URGENT         &lt;NA&gt;               HOME HEALTH CARE  
+##  4 NA        URGENT         &lt;NA&gt;               HOME HEALTH CARE  
+##  5 NA        URGENT         &lt;NA&gt;               HOME              
+##  6 NA        URGENT         &lt;NA&gt;               HOME              
+##  7 NA        URGENT         &lt;NA&gt;               HOME              
+##  8 NA        URGENT         &lt;NA&gt;               ACUTE HOSPITAL    
+##  9 NA        URGENT         &lt;NA&gt;               HOME              
+## 10 NA        URGENT         PROCEDURE SITE     HOME              
+##    insurance language marital_status ethnicity              edregtime
+##    &lt;chr&gt;     &lt;chr&gt;    &lt;chr&gt;          &lt;chr&gt;                  &lt;dttm&gt;   
+##  1 Other     ENGLISH  &lt;NA&gt;           WHITE                  NA       
+##  2 Medicaid  ENGLISH  &lt;NA&gt;           BLACK/AFRICAN AMERICAN NA       
+##  3 Other     ENGLISH  &lt;NA&gt;           BLACK/AFRICAN AMERICAN NA       
+##  4 Other     ENGLISH  &lt;NA&gt;           UNKNOWN                NA       
+##  5 Other     ENGLISH  &lt;NA&gt;           OTHER                  NA       
+##  6 Other     ENGLISH  &lt;NA&gt;           WHITE                  NA       
+##  7 Other     ENGLISH  &lt;NA&gt;           ASIAN                  NA       
+##  8 Other     ?        &lt;NA&gt;           OTHER                  NA       
+##  9 Other     ENGLISH  &lt;NA&gt;           UNKNOWN                NA       
+## 10 Other     ENGLISH  &lt;NA&gt;           UNKNOWN                NA       
+##    edouttime hospital_expire_flag intime stay_id
+##    &lt;dttm&gt;                   &lt;int&gt; &lt;dttm&gt;   &lt;int&gt;
+##  1 NA                           0 NA          NA
+##  2 NA                           0 NA          NA
+##  3 NA                           0 NA          NA
+##  4 NA                           0 NA          NA
+##  5 NA                           0 NA          NA
+##  6 NA                           0 NA          NA
+##  7 NA                           0 NA          NA
+##  8 NA                           0 NA          NA
+##  9 NA                           0 NA          NA
+## 10 NA                           0 NA          NA
+##    first_careunit last_careunit outtime   los
+##    &lt;chr&gt;          &lt;chr&gt;         &lt;dttm&gt;  &lt;dbl&gt;
+##  1 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  2 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  3 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  4 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  5 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  6 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  7 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  8 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+##  9 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+## 10 &lt;NA&gt;           &lt;NA&gt;          NA         NA
+## # … with more rows</code></pre>
+<pre class="r"><code>#collect()  !!!</code></pre>
 <p>Close database connection and clear workspace.</p>
 <pre class="r"><code>dbDisconnect(con)
 rm(list = ls())</code></pre>
@@ -453,6 +1025,7 @@ rm(list = ls())</code></pre>
 <div id="q2.-shiny-app" class="section level2">
 <h2>Q2. Shiny app</h2>
 <p>Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the <code>mimiciv_shiny</code> folder. The app should provide easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort.</p>
+<p>Please see <code>app.R</code> in the <code>mimiciv_shiny</code> folder.</p>
 </div>
 
 

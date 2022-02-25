@@ -86,7 +86,10 @@ icustays_tble <- icustays_tble %>%
 ```{r}
 admissions_tble <- tbl(con, "admissions") %>%
   show_query() %>%
-  left_join(y = icustays_tble, by = "subject_id")
+  left_join(y = icustays_tble, by = c("subject_id", "hadm_id"))
+
+admissions_tble %>% 
+  print(width = Inf)
 ```
 
 5. Connect to the `patients` table and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
@@ -94,45 +97,61 @@ admissions_tble <- tbl(con, "admissions") %>%
 patients_tble <- tbl(con, "patients") %>%
   show_query() %>% 
   left_join(y = icustays_tble, by = "subject_id")
+
+patients_tble %>% 
+  print(width = Inf)
+
 ```
 
 6. Connect to the `labevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the lab items listed in HW2. 
 ```{r}
-labs_of_interest <- c("50912", "50971", "50983", "50902", "50882", 
-                      "51221", "51301", "50931", "50960", "50893")
+labs_of_interest <- c(50912, 50971, 50983, 50902, 50882, 
+                      51221, 51301, 50931, 50960, 50893)
 labevents_tble <- tbl(con, "labevents") %>%
   show_query() %>% 
   filter(itemid %in% labs_of_interest) %>% 
-  inner_join(y = icustays_tble, by = "subject_id")
+  left_join(y = icustays_tble, by = c("subject_id", "hadm_id"))
+  
+labevents_tble %>% 
+  print(width = Inf)
+
 rm(labs_of_interest)
 ```
 
 Only keep the first lab measurements during ICU stay and pivot lab items to become variables/columns.
 ```{r}
-labevents_tble <- labevents_tble %>% 
-  select(subject_id, itemid) %>% 
-  group_by(subject_id, itemid) %>% 
+labevents_tble <- labevents_tble %>%  
+  group_by(subject_id, itemid) %>%
   summarise_all(min) %>%
-  inner_join(labevents_tble, by = c("subject_id", "itemid")) %>%
+  select(subject_id, itemid, hadm_id, intime ) %>% 
+  inner_join(labevents_tble, by = c("subject_id", 
+                                    "itemid", "hadm_id", "intime")) %>%
   ungroup() %>% 
-  pivot_wider(names_from = itemid, 
-              values_from = valuenum, names_prefix = "lab") %>% 
+  pivot_wider(names_from = "itemid", 
+              values_from = "valuenum", names_prefix = "lab") %>% 
   show_query() 
 
-
+labevents_tble %>% 
+  print(width = Inf)
 ```
 
 7. Connect to `chartevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the chart events listed in HW2.
 ```{r}
-vitals_of_interest <- c("220045", "220181", "220179", "223761", "220210")
-vitals_items <- read_csv("/mnt/mimiciv/1.0/icu/d_items.csv.gz",
-  col_select = c(1, 2, 3, 5, 6)) %>% 
-                 filter(itemid %in% vitals_of_interest)
-# # TODO
+vitals_of_interest <- c(220045, 220181, 220179, 223761, 220210)
+vitals_items <- tbl(con, "d_items") %>% 
+  select(1, 2, 3, 5, 6) %>% 
+  filter(itemid %in% vitals_of_interest)
+
 chartevents_tble <- tbl(con, "chartevents") %>%
-  show_query() %>% 
-  filter(itemid %in% vitals_of_interest) %>% 
-  inner_join(y = icustays_tble, by = "subject_id")
+  inner_join(y = vitals_items, by = "itemid") %>% 
+  left_join(y = icustays_tble, by = c("subject_id", "hadm_id", "stay_id")) %>% 
+  show_query() 
+  
+chartevents_tble %>% 
+  print(width = Inf)
+
+vitals_items %>% 
+  print(width = Inf)
 
 rm(vitals_items)
 rm(vitals_of_interest)
@@ -141,7 +160,21 @@ rm(vitals_of_interest)
 Only keep the first chart events during ICU stay and pivot chart events to become variables/columns.
 ```{r}
 # # TODO
-# chartevents_tble <- chartevents_tble %>% ...
+chartevents_tble <- chartevents_tble %>%  
+  group_by(subject_id, itemid) %>%
+  summarise_all(min) %>%
+  select(subject_id, itemid, hadm_id, intime ) %>% 
+  inner_join(chartevents_tble, by = c("subject_id", 
+                                    "itemid", "hadm_id", "intime")) %>%
+  ungroup() %>% 
+  pivot_wider(names_from = "itemid", 
+              values_from = "valuenum", names_prefix = "vitals") %>% 
+  show_query() 
+
+chartevents_tble %>% 
+  print(width = Inf)
+
+
 ```
 
 8. Put things together. This step is similar to Q7 of HW2. Using one chain of pipes `%>%` to perform following data wrangling steps: (i) start with the `icustays_tble` for the first ICU stay of each unique patient, (ii) merge in admissions and patients tables, (iii) keep adults only (age at admission >= 18), (iv) merge in the labevents and chartevents tables, (v) create an indicator for 30-day mortality, (vi) save the final tibble to an `icu_cohort.rds` R data file in the `mimiciv_shiny` folder.
@@ -151,12 +184,17 @@ Only keep the first chart events during ICU stay and pivot chart events to becom
 if (!dir.exists("mimiciv_shiny")) {
   dir.create("mimiciv_shiny")
 }
+icustays_tble %>% 
+  print(width = Inf)
 ```
 
 ```{r}
 # # TODO
-# icu_cohort <- icustays_tble %>% ...
+icu_cohort <- icustays_tble %>% 
+  left_join(admissions_tble, by = c("subject_id", "hadm_id"))
 
+admissions_tble %>% 
+  print(width = Inf)
 #collect()  !!!
 ```
 
@@ -170,3 +208,4 @@ rm(list = ls())
 
 Develop a Shiny app for exploring the ICU cohort data created in Q1. The app should reside in the `mimiciv_shiny` folder. The app should provide easy access to the graphical and numerical summaries of variables (demographics, lab measurements, vitals) in the ICU cohort.
 
+Please see `app.R` in the `mimiciv_shiny` folder.
