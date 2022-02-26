@@ -1,4 +1,7 @@
 library(shiny)
+library(ggplot2)
+
+icu_cohort <- readRDS("icu_cohort.rds")
 
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
@@ -7,15 +10,16 @@ ui <- fluidPage(
   
   sidebarLayout(
     
-    # Sidebar panel for inputs ----
     sidebarPanel(
       
-      # Input: Slider for the number of bins ----
-      sliderInput(inputId = "bins",
-                  label = "Number of bins:",
-                  min = 1,
-                  max = 50,
-                  value = 30)
+      helpText("Analyzing demographics variables from MIMIC IV ICU Cohort"),
+      
+      selectInput("var",
+                 label = "Choose a variable to display",
+                 choices = c("Age", "Gender", "Ethnicity", "Language", 
+                             "Marital Status", "Insurance")
+        
+      ),
       
     ),
     
@@ -33,24 +37,30 @@ ui <- fluidPage(
 # Define server logic required to draw a histogram ----
 server <- function(input, output) {
   
-  # Histogram of the Old Faithful Geyser Data ----
-  # with requested number of bins
-  # This expression that generates a histogram is wrapped in a call
-  # to renderPlot to indicate that:
-  #
-  # 1. It is "reactive" and therefore should be automatically
-  #    re-executed when inputs (input$bins) change
-  # 2. Its output type is a plot
   output$distPlot <- renderPlot({
+    data <- switch(input$var,
+                   "Age"= icu_cohort$anchor_age,
+                   "Gender" = icu_cohort$gender,
+                   "Ethnicity" = icu_cohort$ethnicity,
+                   "Language" = icu_cohort$language,
+                   "Marital Status" = icu_cohort$marital_status,
+                   "Insurance" = icu_cohort$insurance
+    )
     
-    x    <- faithful$waiting
-    bins <- seq(min(x), max(x), length.out = input$bins + 1)
-    
-    hist(x, breaks = bins, col = "#75AADB", border = "white",
-         xlab = "Waiting time to next eruption (in mins)",
-         main = "Histogram of waiting times")
+    ggplot(icu_cohort, aes(x = data)) + #TODO: add fill = icu_cohort$thirtyDayMortality
+             geom_bar(position = "stack", width = 0.6) +
+             ggtitle("Patient Demographics and Thirty Day Mortality") +
+             xlab("Demographic Characteristics of Patients") + 
+             ylab("Thirty Day Mortality Indication") +
+             theme(aspect.ratio = 1/2) +
+             theme_light()
     
   })
+  
+  summarise(group_by(icu_cohort, thirty_day_mort),   
+            means = mean(data),
+            sd = sd(data)
+    )
   
 }
 
