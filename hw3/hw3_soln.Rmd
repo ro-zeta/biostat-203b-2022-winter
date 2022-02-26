@@ -195,6 +195,7 @@ if (!dir.exists("mimiciv_shiny")) {
 ```
 
 ```{r}
+library(lubridate)
 # since admissions_tble & icustays_tble have already been merged, skipping that 
 icu_cohort <- admissions_tble %>% 
   left_join(patients_tble, 
@@ -207,18 +208,16 @@ icu_cohort <- admissions_tble %>%
   left_join(chartevents_tble, 
     by = c("subject_id", "hadm_id", "intime","charttime", "stay_id", 
            "first_careunit", "last_careunit", "outtime", "los")) %>% 
-  filter(charttime>= intime & charttime <= outtime)
-  # %>% 
-  # mutate(mortalityDay = 
-  #          ifelse(is.na(dod), 35*24*3600, dod - admittime)) %>% 
-  # mutate(thirty_day_mort = mortalityDay<=(30*24*3600)) %>% 
-  # select(-mortalityDay)
-
-icu_cohort %>% 
+  filter(charttime>= intime & charttime <= outtime) %>% 
+  mutate(mortalityDay = date_diff(dod, date(admittime), DAY)) %>% 
+  mutate(thirty_day_mort = if_else(is.na(mortalityDay), F, 
+                                   mortalityDay<=30)) %>% 
+  select(-mortalityDay) %>% 
+  show_query() %>% 
   print(width = Inf)
-
+  
 icu_cohort %>% 
-  collect() %>% 
+  collect() %>%
   write_rds(file = "mimiciv_shiny/icu_cohort.rds")
 ```
 
