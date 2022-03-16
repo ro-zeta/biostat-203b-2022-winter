@@ -50,7 +50,53 @@ III. The parameter estimates obtained in the second step will be combined into o
 3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
 
 ```{r}
-icu <- readRDS("./icu_cohort_HW4.rds")
+icu <- readRDS("icu_cohort_HW4.rds") %>% 
+  select(-dischtime, -deathtime, -discharge_location, -edregtime, edouttime, -hospital_expire_flag, -outtime, -anchor_year_group, -dod) 
+
+icu <- icu %>% 
+  distinct(subject_id, .keep_all = TRUE)
+
+icu_vars <- colnames(icu)
+icu_vars[27:36] <- c(
+    "hematocrit_lab",
+    "sodium_lab", 
+    "WBC_lab", 
+    "calcium_lab", 
+    "potassium_lab", 
+    "chloride_lab", 
+    "magnesium_lab", 
+    "creatinine_lab",
+    "bicarbonate_lab", 
+    "glucose_lab" 
+    )
+icu_vars[41:45] <- c(
+  "blood_pressure_systolic", 
+  "mean_blood_pressure", 
+  "respiratory_rate", 
+  "heart_rate", 
+  "temperature"
+  )
+  
+colnames(icu) <- icu_vars
+rm(icu_vars)
+
+#finding and removing outliers based on IQR
+remove_outliers_IQR <- function(x){
+  lq <- quantile(df[, x], 0.25, na.rm = T)
+  uq <- quantile(df[, x], 0.75, na.rm = T)
+  iqr <- uq - lq
+  df[which(df[, x] >= lq + (1.5*iqr) | df[, x] <= uq - (1.5*iqr)), x] <- NA
+  return(df[, x])
+}
+
+icu_noOutliers <- remove_outliers_IQR(1)
+
+#may need this later
+count_NAs <- function(x, df){
+  num_NAs <- which(is.na(df[, x]) == T) %>% 
+  length()
+}
+
 
 ```
 
