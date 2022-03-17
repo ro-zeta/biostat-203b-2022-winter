@@ -51,13 +51,15 @@ III. The parameter estimates obtained in the second step will be combined into o
 
 ```{r}
 icu <- readRDS("icu_cohort_HW4.rds") %>% 
-  select(-dischtime, -deathtime, -discharge_location, -edregtime, edouttime, -hospital_expire_flag, -outtime, -anchor_year_group, -dod) 
+  select(-admittime, -edouttime, -anchor_year, -charttime, -storetime, 
+         -dischtime, -deathtime, -discharge_location, -edregtime, 
+         -hospital_expire_flag, -outtime, -intime, -anchor_year_group, -dod) 
 
 icu <- icu %>% 
   distinct(subject_id, .keep_all = TRUE)
 
 icu_vars <- colnames(icu)
-icu_vars[27:36] <- c(
+icu_vars[21:30] <- c(
     "hematocrit_lab",
     "sodium_lab", 
     "WBC_lab", 
@@ -69,7 +71,7 @@ icu_vars[27:36] <- c(
     "bicarbonate_lab", 
     "glucose_lab" 
     )
-icu_vars[41:45] <- c(
+icu_vars[35:39] <- c(
   "blood_pressure_systolic", 
   "mean_blood_pressure", 
   "respiratory_rate", 
@@ -79,9 +81,12 @@ icu_vars[41:45] <- c(
   
 colnames(icu) <- icu_vars
 rm(icu_vars)
+sumNAs_before <- sum(is.na(icu))
+
+#TODO: may still need to double-check the function
 
 #finding and removing outliers based on IQR
-remove_outliers_IQR <- function(x){
+remove_outliers_IQR <- function(df, x){
   lq <- quantile(df[, x], 0.25, na.rm = T)
   uq <- quantile(df[, x], 0.75, na.rm = T)
   iqr <- uq - lq
@@ -89,23 +94,51 @@ remove_outliers_IQR <- function(x){
   return(df[, x])
 }
 
-icu_noOutliers <- remove_outliers_IQR(1)
-
-#may need this later
-count_NAs <- function(x, df){
-  num_NAs <- which(is.na(df[, x]) == T) %>% 
-  length()
+icu_edited <- icu %>% 
+  select(where(is.numeric))
+  
+numNAs_numeric <- sum(is.na(icu_edited))  
+for(i in 1:ncol(icu_edited)){
+  icu_edited[i] = remove_outliers_IQR(icu_edited, i)
 }
 
+numNAs_QualityCheck <- sum(is.na(icu_edited))  
 
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ data sets). This step is computational intensive. Make sure to save the imputation results as a file. Hint: Setting `max.depth=10` in the `miceRanger` function may cut some computing time.
 
+```{r}
+seqTime <- system.time(
+  miceObj <- miceRanger(
+      icu_edited, 
+      m=3, 
+      returnModels = TRUE, 
+      verbose=FALSE
+  )
+)
+miceObj
+
+miceObj %>%
+  saveRDS(str_c("./miceObj.rds"))
+
+miceObj <- readRDS("./miceObj.rds")
+```
+
 5. Make imputation diagnostic plots and explain what they mean.
 
+```{r}
+
+```
+
 6. Choose one of the imputed data sets to be used in Q2. This is **not** a good idea to use just one imputed data set or to average multiple imputed data sets. Explain in a couple of sentences what the correct Multiple Imputation strategy is.
+
+```{r}
+
+
+
+```
 
 ## Q2. Predicting 30-day mortality
 
