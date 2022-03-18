@@ -50,38 +50,14 @@ III. The parameter estimates obtained in the second step will be combined into o
 3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
 
 ```{r}
-icu <- readRDS("icu_cohort_HW4.rds") %>% 
-  select(-admittime, -edouttime, -anchor_year, -charttime, -storetime, 
-         -dischtime, -deathtime, -discharge_location, -edregtime, 
-         -hospital_expire_flag, -outtime, -intime, -anchor_year_group, -dod) 
 
-icu <- icu %>% 
-  distinct(subject_id, .keep_all = TRUE)
+icu_cohort <- readRDS("icu_cohort_HW4_HZ.rds")
+ # %>% 
+ #  select(-admittime, -edouttime, -anchor_year, -charttime, -storetime, 
+ #         -dischtime, -deathtime, -discharge_location, -edregtime, 
+ #         -hospital_expire_flag, -outtime, -intime, -anchor_year_group, -dod) 
 
-icu_vars <- colnames(icu)
-icu_vars[21:30] <- c(
-    "hematocrit_lab",
-    "sodium_lab", 
-    "WBC_lab", 
-    "calcium_lab", 
-    "potassium_lab", 
-    "chloride_lab", 
-    "magnesium_lab", 
-    "creatinine_lab",
-    "bicarbonate_lab", 
-    "glucose_lab" 
-    )
-icu_vars[35:39] <- c(
-  "blood_pressure_systolic", 
-  "mean_blood_pressure", 
-  "respiratory_rate", 
-  "heart_rate", 
-  "temperature"
-  )
-  
-colnames(icu) <- icu_vars
-rm(icu_vars)
-sumNAs_before <- sum(is.na(icu))
+sumNAs_before <- sum(is.na(icu_cohort))
 
 #TODO: may still need to double-check the function
 
@@ -94,57 +70,99 @@ remove_outliers_IQR <- function(df, x){
   return(df[, x])
 }
 
-icu_edited <- icu %>% 
+icu_Num <- icu_cohort %>% 
   select(where(is.numeric))
   
-numNAs_numeric <- sum(is.na(icu_edited))  
-for(i in 1:ncol(icu_edited)){
-  icu_edited[i] = remove_outliers_IQR(icu_edited, i)
+numNAs_numeric <- sum(is.na(icu_Num)) 
+rm(icu_Num)
+for(i in 1:ncol(icu_cohort)){
+  if(is.numeric(icu_cohort)){
+    icu_cohort[i] = remove_outliers_IQR(icu_cohort, i)
+  }
 }
 
-numNAs_QualityCheck <- sum(is.na(icu_edited))  
+numNAs_QualityCheck <- sum(is.na(icu_cohort))  
 
+#removing columns with substantial number of NAs
+icu_cohort2 <- icu_cohort %>%
+  select(-deathtime, -edregtime, -edouttime, -dod,
+         -non_invasive_blood_pressure_systolic,
+         -non_invasive_blood_pressure_mean, -anchor_year, -anchor_year_group,
+         -subject_id, -intime, -hadm_id, -stay_id, -first_careunit, 
+         -last_careunit, -mortalityDay, -outtime, -admittime, -dischtime)
+
+numNAs_NAremoved <- sum(is.na(icu_cohort2))
+
+rm(icu_cohort)
 ```
 
 
 4. Impute missing values by `miceRanger` (request $m=3$ data sets). This step is computational intensive. Make sure to save the imputation results as a file. Hint: Setting `max.depth=10` in the `miceRanger` function may cut some computing time.
 
 ```{r}
-seqTime <- system.time(
+if(file.exists(str_c("./miceObj.rds"))){
+  miceObj_load <- readRDS("./miceObj.rds")
+} else {
   miceObj <- miceRanger(
-      icu_edited, 
-      m=3, 
-      returnModels = TRUE, 
-      verbose=FALSE
-  )
+    icu_cohort2,
+    m = 3,
+    max.depth = 10,
+    returnModels = FALSE,
+    verbose = FALSE
 )
-miceObj
-
-miceObj %>%
+  miceObj %>%
   saveRDS(str_c("./miceObj.rds"))
+}
 
-miceObj <- readRDS("./miceObj.rds")
+rm(icu_cohort2)
 ```
 
 5. Make imputation diagnostic plots and explain what they mean.
 
-```{r}
+```{r Fig1_Density_Imputed_vs_Original}
+miceObj_load <- readRDS("./miceObj.rds")
+plotDistributions(miceObj_load, vars = 'allNumeric')
 
 ```
+The distribution plot above shows the original and imputed data distributions. Based on the plot the distributions look similar between the original and the imputed values.
+
+```{r Fig2_CorrPlot_Imputed_vs_Original}
+plotCorrelations(miceObj_load, vars = 'allNumeric')
+```
+The correlation plot above shows convergence of the imputed variables. In this case the imputation has converged.
+
+```{r Fig3_VarConvergence_Imputed_vs_Original}
+plotVarConvergence(miceObj_load, vars = 'allNumeric')
+```
+The variable convergence plot above depicts the iterations at which the imputation converged.
+
+```{r Fig4_ModelError_Imputed_vs_Original}
+plotModelError(miceObj_load, vars = 'allNumeric')
+```
+The degree of accuracy is not great in the imputed dataesets. However, for the sake of time
 
 6. Choose one of the imputed data sets to be used in Q2. This is **not** a good idea to use just one imputed data set or to average multiple imputed data sets. Explain in a couple of sentences what the correct Multiple Imputation strategy is.
 
 ```{r}
-
-
-
+miceObj_chose <- miceObj_load
 ```
+The correct imputation strategy would be to average the imputed datasets using the 
+`completeData` function from the miceRanger package. For the purposes of the class project, in order
+to decide 
 
 ## Q2. Predicting 30-day mortality
 
 Develop at least two analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression (`glm()` function in base R or keras), (2) logistic regression with lasso penalty (glmnet or keras package), (3) random forest (randomForest package), or (4) neural network (keras package).
 
+```{r}
+# library(reticulate)
+# virtualenv_create("r-reticulate")
+# library(keras)
+# install_keras(tensorflow = 2.6)
+```
+
 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+
 
 2. Train the models using the training set.
 
