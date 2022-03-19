@@ -124,16 +124,20 @@ miceObj_load <- readRDS("./miceObj.rds")
 plotDistributions(miceObj_load, vars = 'allNumeric')
 
 ```
+  
 The distribution plot above shows the original and imputed data distributions. Based on the plot the distributions look similar between the original and the imputed values.
 
 ```{r Fig2_CorrPlot_Imputed_vs_Original}
 plotCorrelations(miceObj_load, vars = 'allNumeric')
 ```
+  
 The correlation plot above shows convergence of the imputed variables. In this case the imputation has converged.
 
 ```{r Fig3_VarConvergence_Imputed_vs_Original}
-plotVarConvergence(miceObj_load, vars = 'allNumeric')
+plotVarConvergence(miceObj_load, vars = 'allNumeric',
+                   font.label = list( color = c("black", "blue", "red")))
 ```
+  
 The variable convergence plot above depicts the iterations at which the imputation converged.
 
 ```{r Fig4_ModelError_Imputed_vs_Original}
@@ -141,30 +145,150 @@ plotModelError(miceObj_load, vars = 'allNumeric')
 ```
 The degree of accuracy is not great in the imputed dataesets. However, for the sake of time
 
-6. Choose one of the imputed data sets to be used in Q2. This is **not** a good idea to use just one imputed data set or to average multiple imputed data sets. Explain in a couple of sentences what the correct Multiple Imputation strategy is.
+6. Choose one of the imputed data sets to be used in Q2. This is **not** a good idea to use just one imputed data set or to average multiple imputed data sets. Explain in a couple of sentences what the correct Multiple Imputation strategy is.  
 
 ```{r}
-miceObj_chose <- miceObj_load
+average_error_at_It5 <- data.frame(matrix(NA,    # Create empty data frame
+                          nrow = 3,
+                          ncol = 12))
+
+for(i in 1:length(average_error_at_It5)){
+  average_error_at_It5[,i] <- rbind(
+    miceObj_load$allError$Dataset_1[[i+3]][5], 
+    miceObj_load$allError$Dataset_2[[i+3]][5],
+    miceObj_load$allError$Dataset_3[[i+3]][5]
+  )
+}
+
+# install.packages("fastDummies")
+library(fastDummies)
+
+imputed_list <- completeData(miceObj_load)
+
+# head(data_list[[1]], 10)
+imputed_2 <- dummy_cols(imputed_list[2],
+                        remove_first_dummy = T,
+                        remove_selected_columns = T)
+
+rm(miceObj_load)
 ```
+
+   **Solution:**   
 The correct imputation strategy would be to average the imputed datasets using the 
-`completeData` function from the miceRanger package. For the purposes of the class project, in order
-to decide 
+`completeData` function from the `miceRanger` package. For the purposes of the class project, I quickly plotted the average 
+error values at 5th iteration, and chose the 2nd imputed data set since it had better error (OOB) values across the variables
+imputted.
+
 
 ## Q2. Predicting 30-day mortality
 
 Develop at least two analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression (`glm()` function in base R or keras), (2) logistic regression with lasso penalty (glmnet or keras package), (3) random forest (randomForest package), or (4) neural network (keras package).
 
 ```{r}
+#TODO: NEED TO UNCOMMENT THESE WHEN SUBMITTING:
 # library(reticulate)
 # virtualenv_create("r-reticulate")
 # library(keras)
 # install_keras(tensorflow = 2.6)
+
+library(caret)
+library(pROC)
+library(ggthemes)
+library(data.table)
+
+imput_cols <- colnames(imputed_2)
+imput_cols <- str_sub(imput_cols, start = 17)
+imput_cols[19:26] <- c("AT_emergency", "AT_observation", "AT_elective", 
+                       "AT_eu_observation", "AT_ew_emergency", 
+                       "AT_observ_admit", "AT_surgical", "AT_urgent")
+imput_cols[27:36] <- c("ALoc_clinRef", "ALoc_ER", "ALoc_Unknown", 
+                       "ALoc_fromPsych", "ALoc_fromPACU", "ALoc_docRef", 
+                       "ALoc_procSite", "ALoc_fromHosp", "ALoc_fromSNF",
+                       "ALoc_walkIn")
+imput_cols[55:61] <- c("ethn_Asian", "ethn_Black", "ethn_Latinx", "ethn_Other",
+                       "ethn_NotObtained", "ethn_Unknown", "ethn_White")
+
+colnames(imputed_2) <- imput_cols
+
+imputed_2 <- as_tibble(imputed_2) %>% 
+  pivot_longer(c("ethn_NotObtained", "ethn_Unknown"), names_to = "ethnicity",
+                  values_to = "ethn_NotKnown") %>% 
+  select(-ethnicity)
+  
+# as_tibble(imputed_2) %>% 
+#   pivot_longer(c("los", "hospital_expire_flag", "anchor_age", "magnesium", 
+#                  "hematocrit", "potassium", "sodium", "wbc", "bicarbonate", 
+#                  "calcium", "chloride", "creatinine", "glucose", 
+#                  "temperature_fahrenheit", "respiratory_rate", "heart_rate" , 
+#                  "age_hadm"), names_to = "Physio_chars", 
+#                values_to = "Physio_vals") %>%  
+# ggplot(aes(x = thirty_day_mort, y = Physio_vals)) +
+# geom_point(alpha = 0.5) +
+# geom_boxplot(aes(color = thirty_day_mort)) +  
+# labs( x = "Physiologic Measure", y = "Thirty Day Mortality", 
+#         color = "Thirty Day Mortality") + 
+# scale_color_manual(values = c("royalblue", "brown1")) +
+# theme_bw() +
+# facet_wrap(~Physio_chars,  ncol = 6) 
+
 ```
 
 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+```{r}
+set.seed(123)
+training <- sample_frac(imputed_2, 0.8)
 
+#rest set as testing
+train_ids <- as.numeric(rownames(training))
+testing <- imputed_2[-train_ids, ]
+```
 
-2. Train the models using the training set.
+  **Method 1: Generalized Linear Model**  
+  
+2. Train the models using the training set.  
+```{r}
+log_train <- glm(
+              training$thirty_day_mort~.,
+              binomial(link = 'logit'), data = training)
+
+#overall training results
+summary(log_train)
+```
 
 3. Compare model prediction performance on the test set.
+```{r}
+# Test sample
+testing$logit_prob <- predict(log_train, testing, type = "response")
+
+colnames(testing)
+
+# adding in the actual values
+testing <- testing %>% 
+  mutate(model_pred = (logit_prob > 0.95), 
+                         mortality = thirty_day_mort)
+
+# model accuracy
+testing <- testing %>% 
+  mutate(accuracy = (model_pred == thirty_day_mort))
+  
+# Overall percent accurace  
+glm_accuracy <- 100*sum(testing$accuracy)/nrow(testing)
+```
+
+
+
+ **Method 2: Neural Network**  
+ 2. Train the models using the training set.  
+```{r}
+# neuro_train 
+```
+
+3. Compare model prediction performance on the test set.
+```{r}
+
+```
+
+
+
+
 
