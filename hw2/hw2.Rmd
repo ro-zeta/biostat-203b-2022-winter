@@ -160,7 +160,7 @@ rm(admissions_tidyR)
 ```{r}
 join_keys <- c("subject_id", "hadm_id")
 admissions_tble <- admissions_tble %>%  
-    inner_join(y = icustays_tble, by = join_keys) 
+    semi_join(y = icustays_tble, by = join_keys) 
 #check if there are duplicate columns to remove:
 admissions_tble <- admissions_tble[!duplicated(as.list(admissions_tble))]
 rm(join_keys)
@@ -194,9 +194,10 @@ The initial look at admission year variable using a histogram suggested that thi
 #removing variables not necessary anymore
 rm(data_collection_start)
 rm(data_collection_end)
-
+ 
+require(lubridate)
 admissions_tble %>% 
-  mutate(admission_month = month(admissions_tble$admittime, label = T)) %>% 
+  mutate(admission_month = month(admissions_tble$admittime)) %>% 
   ggplot(aes(admission_month, fill = admission_month)) +
   geom_bar() +
   ggtitle("Figure 3B. Admission Month Variable") +
@@ -222,7 +223,7 @@ admissions_tble %>%
 - admission week day  
 ```{r}
 admissions_tble %>% 
-  mutate(admission_wday = wday(admissions_tble$admittime, label = T)) %>% 
+  mutate(admission_wday = wday(admissions_tble$admittime)) %>% 
   ggplot(aes(admission_wday, fill = admission_wday)) +
   geom_bar() +
   ggtitle("Figure 3D. Day of the Week Variable Counts") +
@@ -264,7 +265,7 @@ system(
 ```{r}
 patients_tble <- read_csv("/mnt/mimiciv/1.0/core/patients.csv.gz")
 patients_tble <- tibble( patients_tble)
-patients_tble <- inner_join(patients_tble, icustays_tble, by = c("subject_id"))
+patients_tble <- semi_join(patients_tble, icustays_tble, by = c("subject_id"))
 ```
 
 
@@ -353,6 +354,34 @@ read_csv(
 labs_of_interest <- c("50912", "50971", "50983", "50902", "50882", 
                       "51221", "51301", "50931", "50960", "50893")
 
+# if interested in reading the full dataset vs filtered dataset
+# system.time(
+#   if(file.exists(str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz"))){
+#     labevents_tble <- 
+#       read_csv(str_c(mimic_path, "/hosp/labevents_filtered_itemid.csv.gz"),
+#                col_select = c(subject_id, itemid, charttime, valuenum),
+#                col_types = cols_only(subject_id = col_double(),
+#                                      itemid = col_double(),
+#                                      charttime = col_datetime(),
+#                                      valuenum = col_double())
+#                ) %>% 
+#       semi_join(icustays_tble, by = c("subject_id")) %>% 
+#       print(width = Inf)
+#   } else{
+#     labevents_tble <- 
+#       read_csv(str_c(mimic_path, "/hosp/labevents.csv.gz"),
+#                col_select = c(subject_id, itemid, charttime, valuenum),
+#                col_types = cols_only(subject_id = col_double(),
+#                                      itemid = col_double(),
+#                                      charttime = col_datetime(),
+#                                      valuenum = col_double())
+#                ) %>% 
+#       semi_join(icustays_tble, by = c("subject_id")) %>% 
+#       filter(itemid %in% labs_of_interest) %>% 
+#       print(width = Inf)
+#   }
+# )
+
 labitems_tble <- read_csv(
                            "/mnt/mimiciv/1.0/hosp/d_labitems.csv.gz", 
                            col_select = c(1, 2),
@@ -363,9 +392,8 @@ labitems_tble <- read_csv(
 #reading in the data set
 labevents_tble <- read_csv(
     "/mnt/mimiciv/1.0/hosp/labevents_filtered_itemid.csv.gz") %>%
-      inner_join(y = labitems_tble, by = "itemid") %>% 
-      inner_join(y = icustays_tble, by = "subject_id") %>% 
-      select(-los)
+      semi_join(y = labitems_tble, by = "itemid") %>% 
+      semi_join(y = icustays_tble, by = "subject_id") 
 
 rm(labitems_tble)
 rm(labs_of_interest)
@@ -373,11 +401,16 @@ rm(labs_of_interest)
 
 3. Further restrict `labevents_tble` to the first lab measurement during the ICU stay. 
 ```{r}
+
+### HAVE A PROBLEM HERE: MAKE IT LIKE PROFESSOR'S
 labevents_tble <- labevents_tble %>%
-   group_by(subject_id) %>% 
+   left_join(icustays_tble, by = c("subject_id")) %>%
+   filter(charttime >= intime & charttime <= outtime) %>% 
+   group_by(subject_id, itemid) %>% 
    arrange(charttime, .group_by = T) %>% 
    slice_head(n = 1) %>% 
-   ungroup()
+   ungroup() 
+
 ```
 
 
@@ -486,7 +519,7 @@ rm(vitals_of_interest)
 2. Further restrict `chartevents_tble` to the first vital measurement during the ICU stay. 
 ```{r}
 chartevents_tble <- chartevents_tble %>%
-                      group_by(subject_id) %>% 
+                      group_by(subject_id, itemid) %>% 
                       arrange(charttime, .group_by = T) %>% 
                       slice_head(n = 1) %>% 
                       ungroup()
@@ -507,7 +540,7 @@ chartevents_tble %>%
   ylab("Result Values") +
   theme_light() 
 
-chartevents_tble <- chartevents_tble %>% 
+chartevents_tble_noOutlier <- chartevents_tble %>% 
   filter(valuenum != outlier1)
 
 #This code revealed an outler in HR but is not necessary for final graphs
@@ -524,10 +557,10 @@ chartevents_tble <- chartevents_tble %>%
 outlier2 <- max(chartevents_tble$valuenum[
   which(chartevents_tble$abbreviation == "HR")])
 
-chartevents_tble <- chartevents_tble %>% 
+chartevents_tble_noOutlier <- chartevents_tble_noOutlier %>% 
   filter(valuenum != outlier2)
 
-chartevents_tble %>% 
+chartevents_tble_noOutlier %>% 
   ggplot(aes(x = abbreviation, y = valuenum, color = label)) +
   geom_boxplot(notch = T) +
   ggtitle(
@@ -537,7 +570,7 @@ chartevents_tble %>%
   ylab("Result Values") +
   theme_light() 
 
-chartevents_tble %>% 
+chartevents_tble_noOutlier %>% 
   select(subject_id, itemid, valuenum) %>% 
   pivot_wider(names_from = itemid, values_from = valuenum) %>% 
   summarize(
@@ -548,6 +581,8 @@ chartevents_tble %>%
     temperature = format(mean(na.omit(`223761`)), digits = 3),
     respiratory_rate = format(mean(na.omit(`220210`)), digits = 3)
   )
+
+rm(chartevents_tble_noOutlier)
 ```
 
 Initial plot of test result values _(Fig. 6A)_ revealed an outlier in the Non invasive blood pressure mean values (`r outlier1` marked with black circle), which is clearly a mistake since it is multiple orders of magnitude higher than the physiological range. Thus, the variable was removed from further analyses. 
