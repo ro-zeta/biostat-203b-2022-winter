@@ -130,7 +130,8 @@ contents of a .gz file page by page without uncompressing it.
     ```{bash, eval=T}
         for datafile in /mnt/mimiciv/1.0/icu/*.gz
           do
-            wc -l $datafile
+            echo "line count in" $datafile ":" 
+            zcat $datafile | wc -l
           done
     ```
 
@@ -153,22 +154,22 @@ each unique value of these variables. (Hint: combine Linux commands `zcat`,
     **Solution:**
     ```{bash, eval=T}
        zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-       awk -F, '{ print $6 }' | sort | uniq 
+       awk -F, '{ print $6 }' | sort | uniq -c 
     ```
 
     ```{bash, eval=T}
        zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-       awk -F, '{ print $7 }' | sort | uniq 
+       awk -F, '{ print $7 }' | sort | uniq -c 
     ```
     
     ```{bash, eval=T}
        zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-       awk -F, '{ print $9 }' | sort | uniq 
+       awk -F, '{ print $9 }' | sort | uniq -c
     ```    
 
     ```{bash, eval=T}
        zcat /mnt/mimiciv/1.0/core/admissions.csv.gz | sort | tail -n +2 | 
-       awk -F, '{ print $12 }' | sort | uniq 
+       awk -F, '{ print $12 }' | sort | uniq -c 
     ```        
 --- 
  
