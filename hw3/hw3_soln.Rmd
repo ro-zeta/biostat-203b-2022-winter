@@ -85,22 +85,17 @@ icustays_tble <- icustays_tble %>%
 4. Connect to the `admissions` table and only keep the patients who have a match in `icustays_tble` (according to `subject_id` and `hadm_id`).
 ```{r}
 admissions_tble <- tbl(con, "admissions") %>%
-  show_query() %>%
-  left_join(y = icustays_tble, by = c("subject_id", "hadm_id"))
-
-admissions_tble %>% 
+  semi_join(icustays_tble, by = c("subject_id", "hadm_id")) %>% 
+  show_query() %>% 
   print(width = Inf)
 ```
 
 5. Connect to the `patients` table and only keep the patients who have a match in `icustays_tble` (according to `subject_id`).
 ```{r}
 patients_tble <- tbl(con, "patients") %>%
+  semi_join(y = icustays_tble, by = "subject_id") %>% 
   show_query() %>% 
-  left_join(y = icustays_tble, by = "subject_id")
-
-patients_tble %>% 
   print(width = Inf)
-
 ```
 
 6. Connect to the `labevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the lab items listed in HW2. 
@@ -109,39 +104,45 @@ labs_of_interest <-(c(50912, 50971, 50983, 50902, 50882,
                       51221, 51301, 50931, 50960, 50893))
 
 labitems_tble <- tbl(con, "d_labitems") %>%  
-  select(1, 2) %>% 
-  filter(itemid %in% labs_of_interest) 
+  filter(itemid %in% labs_of_interest) %>% 
+  print(width = Inf)
 
 labevents_tble <- tbl(con, "labevents") %>%
-  inner_join(y = labitems_tble, by = "itemid") %>% 
-  select(-labevent_id, -specimen_id, -value, -comments) %>% 
+  select(subject_id, itemid, charttime, valuenum) %>% 
   filter(itemid %in% labs_of_interest) %>% 
-  left_join(y = icustays_tble, by = c("subject_id", "hadm_id")) %>% 
-  filter(charttime >= intime & charttime <= outtime) %>% 
-  show_query() 
-
-labevents_tble %>% 
+  semi_join(y = icustays_tble, by = c("subject_id")) %>% 
+  show_query() %>% 
   print(width = Inf)
 
 rm(labs_of_interest)
-rm(labitems_tble)
 ```
 
 Only keep the first lab measurements during ICU stay and pivot lab items to become variables/columns.
 ```{r}
 labevents_tble <- labevents_tble %>%  
-  group_by(subject_id, itemid) %>%
-  summarise_all(min) %>%
-  select(subject_id, itemid, hadm_id, intime ) %>% 
-  inner_join(labevents_tble, by = c("subject_id", 
-                                    "itemid", "hadm_id", "intime")) %>%
-  ungroup() %>% 
-  pivot_wider(names_from = "itemid", 
-              values_from = "valuenum", names_prefix = "lab") %>% 
-  show_query() 
-
-labevents_tble %>% 
+  left_join(select(icustays_tble, subject_id, intime, outtime),
+            by = c("subject_id")) %>% 
+  filter(charttime >= intime & charttime <= outtime) %>% 
+  show_query() %>% 
   print(width = Inf)
+
+labevents_tble <- labevents_tble %>% 
+  select(subject_id, itemid, charttime) %>%
+  group_by(subject_id, itemid) %>% 
+  summarise_all(min) %>% 
+  left_join(labevents_tble, by = c("subject_id", "itemid", "charttime")) %>%
+  select(-charttime, -intime, -outtime) %>% 
+  pivot_wider(names_from = itemid, values_from = valuenum, names_prefix = 
+      "lab_") %>% 
+  rename_at(
+    vars(as.character(str_c("lab_", pull(labitems_tble, itemid)))),
+    ~str_to_lower(pull(labitems_tble, label))
+  ) %>% 
+  rename(wbc = `white blood cells`, calcium = `calcium, total`) %>% 
+  show_query() %>% 
+  print(width = Inf)
+   
+rm(labitems_tble)           
 ```
 
 7. Connect to `chartevents` table and retrieve a subset that only contain subjects who appear in `icustays_tble` and the chart events listed in HW2.
@@ -152,18 +153,12 @@ vitals_items <- tbl(con, "d_items") %>%
   filter(itemid %in% vitals_of_interest)
 
 chartevents_tble <- tbl(con, "chartevents") %>%
-  inner_join(y = vitals_items, by = "itemid") %>% 
-  select(-storetime, -value, - label, -unitname) %>% 
-  left_join(y = icustays_tble, by = c("subject_id", "hadm_id", "stay_id")) %>% 
-  show_query() 
-  
-chartevents_tble %>% 
+  select( stay_id, itemid, charttime, valuenum) %>% 
+  filter(itemid %in% vitals_of_interest) %>% 
+  semi_join(y = icustays_tble, by = c("stay_id")) %>% 
+  show_query() %>% 
   print(width = Inf)
 
-vitals_items %>% 
-  print(width = Inf)
-
-rm(vitals_items)
 rm(vitals_of_interest)
 ```
 
@@ -171,18 +166,30 @@ Only keep the first chart events during ICU stay and pivot chart events to becom
 ```{r}
 # # TODO
 chartevents_tble <- chartevents_tble %>%  
-  group_by(subject_id, itemid) %>%
-  summarise_all(min) %>%
-  select(subject_id, itemid, hadm_id, intime ) %>% 
-  inner_join(chartevents_tble, by = c("subject_id", 
-                                    "itemid", "hadm_id", "intime")) %>%
-  ungroup() %>% 
-  pivot_wider(names_from = "itemid", 
-              values_from = "valuenum", names_prefix = "vitals") %>% 
-  show_query() 
-
-chartevents_tble %>% 
+  left_join(select(icustays_tble, stay_id, intime, outtime), 
+            by = c("stay_id")) %>% 
+  filter(charttime >= intime & charttime <= outtime) %>% 
+  show_query() %>% 
   print(width = Inf)
+  
+  
+chartevents_tble <- chartevents_tble %>%  
+  select(stay_id, itemid, charttime ) %>% 
+  group_by(stay_id, itemid) %>%
+  summarise_all(min) %>%
+  left_join(chartevents_tble, by = c("stay_id", 
+                                    "itemid", "charttime")) %>%
+  
+  select(-charttime, -intime, -outtime) %>% 
+  pivot_wider(names_from = itemid, 
+              values_from = valuenum, names_prefix = "chart_") %>% 
+  rename_at(vars(as.character(str_c("chart_", pull(vitals_items, itemid)))),
+                                    ~str_to_lower(str_replace_all(
+                                      pull(vitals_items, label), ' ', '_'))) %>%
+  show_query() %>% 
+  print(width = Inf)
+
+rm(vitals_items)
 ```
 
 8. Put things together. This step is similar to Q7 of HW2. Using one chain of pipes `%>%` to perform following data wrangling steps: (i) start with the `icustays_tble` for the first ICU stay of each unique patient, (ii) merge in admissions and patients tables, (iii) keep adults only (age at admission >= 18), (iv) merge in the labevents and chartevents tables, (v) create an indicator for 30-day mortality, (vi) save the final tibble to an `icu_cohort.rds` R data file in the `mimiciv_shiny` folder.
@@ -197,28 +204,22 @@ if (!dir.exists("mimiciv_shiny")) {
 ```{r}
 library(lubridate)
 # since admissions_tble & icustays_tble have already been merged, skipping that 
-icu_cohort <- admissions_tble %>% 
-  left_join(patients_tble, 
-     by = c("subject_id", "hadm_id", "intime", "stay_id", "first_careunit", 
-            "last_careunit", "outtime", "los")) %>%
+icu_cohort <- icustays_tble %>% 
+  left_join(admissions_tble, by = c("subject_id", "hadm_id")) %>%
+  left_join(patients_tble, by = c("subject_id"))%>%
+  left_join(labevents_tble, by = c("subject_id")) %>%
+  left_join(chartevents_tble, by = c("stay_id")) %>% 
+  mutate(age_hadm = anchor_age + year(admittime) - anchor_year) %>% 
   filter(anchor_age>=18) %>% 
-  left_join(labevents_tble, 
-     by = c("subject_id", "hadm_id", "intime", "stay_id", 
-            "first_careunit", "last_careunit", "outtime", "los")) %>%
-  left_join(chartevents_tble, 
-    by = c("subject_id", "hadm_id", "intime","charttime", "stay_id", 
-           "first_careunit", "last_careunit", "outtime", "los")) %>% 
-  filter(charttime>= intime & charttime <= outtime) %>% 
   mutate(mortalityDay = date_diff(dod, date(admittime), DAY)) %>% 
-  mutate(thirty_day_mort = if_else(is.na(mortalityDay), F, 
-                                   mortalityDay<=30)) %>% 
-  select(-mortalityDay) %>% 
+  mutate(thirty_day_mort = !is.na(dod) & mortalityDay <= 30) %>% 
   show_query() %>% 
   print(width = Inf)
   
 icu_cohort %>% 
   collect() %>%
-  write_rds(file = "mimiciv_shiny/icu_cohort.rds")
+  write_rds(file = "mimiciv_shiny/icu_cohort2.rds")
+
 ```
 
 Close database connection and clear workspace.

@@ -1,0 +1,486 @@
+---
+title: "Biostat 203B Homework 4"
+subtitle: Due Mar 18 @ 11:59PM
+output:
+  # ioslides_presentation: default
+  html_document:
+    toc: true
+    toc_depth: 4
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+Display machine information:
+```{r}
+sessionInfo()
+```
+Load database libraries and the tidyverse frontend:
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(miceRanger))
+```
+
+## Q1. Missing data
+
+Through the Shiny app developed in HW3, we observe abundant missing values in the MIMIC-IV ICU cohort we created. In this question, we use multiple imputation to obtain a data set without missing values.
+
+0. Read following tutorials on the R package miceRanger for imputation: <https://github.com/farrellday/miceRanger>, <https://cran.r-project.org/web/packages/miceRanger/vignettes/miceAlgorithm.html>.
+
+    A more thorough book treatment of the practical imputation strategies is the book [*_Flexible Imputation of Missing Data_*](https://stefvanbuuren.name/fimd/) by Stef van Buuren. 
+
+1. Explain the jargon MCAR, MAR, and MNAR.  
+*MCAR* stands for *missing completely at random*, meaning that causes of the missing data are unrelated to the data.
+
+*MAR* stands for *missing at random*, which differs from MCAR in that the probability of being missing is this case is the same only within groups defined by the observed data.
+
+*MNAR* stands for *missing not at random*, which implies that the probability of being missing may be higher for a specific group, however, it differs from MAR in that here the reasons for this probability are hard to recognize or control.
+
+2. Explain in a couple of sentences how the Multiple Imputation by Chained Equations (MICE) work.
+
+MICE works in 3 main steps:
+I. The data with missing values is inputted into the mice function which creates several complete versions of the data by replacing the missing values with plausible values. These plausible values are drawn from a distribution specifically modeled for each missing entry. The imputed data will be identical in the observed data values. However, they will differ in the imputed values and the magnitude of this difference is the uncertainty of the imputed values.
+
+II. Then the same statistical method that was to be applied to the complete data will be applied to all imputed data to estimate parameters for each. The differences in the parameter estimates will also tell us about the level of uncertainty about the imputed values.
+
+III. The parameter estimates obtained in the second step will be combined into one estimate, with its variance being a combination of the within-imputation variance and between-imputation variance. 
+
+3. Perform a data quality check of the ICU stays data. Discard variables with substantial missingness, say >5000 `NA`s. Replace apparent data entry errors by `NA`s.
+
+```{r}
+
+icu_cohort <- readRDS("icu_cohort_HW4_HZ.rds")
+ # %>% 
+ #  select(-admittime, -edouttime, -anchor_year, -charttime, -storetime, 
+ #         -dischtime, -deathtime, -discharge_location, -edregtime, 
+ #         -hospital_expire_flag, -outtime, -intime, -anchor_year_group, -dod) 
+
+sumNAs_before <- sum(is.na(icu_cohort))
+
+#TODO: may still need to double-check the function
+
+#finding and removing outliers based on IQR
+remove_outliers_IQR <- function(df, x){
+  lq <- quantile(df[, x], 0.25, na.rm = T)
+  uq <- quantile(df[, x], 0.75, na.rm = T)
+  iqr <- uq - lq
+  df[which(df[, x] >= lq + (1.5*iqr) | df[, x] <= uq - (1.5*iqr)), x] <- NA
+  return(df[, x])
+}
+
+icu_Num <- icu_cohort %>% 
+  select(where(is.numeric))
+  
+numNAs_numeric <- sum(is.na(icu_Num)) 
+rm(icu_Num)
+for(i in 1:ncol(icu_cohort)){
+  if(is.numeric(icu_cohort)){
+    icu_cohort[i] = remove_outliers_IQR(icu_cohort, i)
+  }
+}
+
+numNAs_QualityCheck <- sum(is.na(icu_cohort))  
+
+#removing columns with substantial number of NAs
+icu_cohort2 <- icu_cohort %>%
+  select(-deathtime, -edregtime, -edouttime, -dod,
+         -non_invasive_blood_pressure_systolic,
+         -non_invasive_blood_pressure_mean, -anchor_year, -anchor_year_group,
+         -subject_id, -intime, -hadm_id, -stay_id, -first_careunit, 
+         -last_careunit, -mortalityDay, -outtime, -admittime, -dischtime)
+
+numNAs_NAremoved <- sum(is.na(icu_cohort2))
+
+rm(icu_cohort)
+```
+
+
+4. Impute missing values by `miceRanger` (request $m=3$ data sets). This step is computational intensive. Make sure to save the imputation results as a file. Hint: Setting `max.depth=10` in the `miceRanger` function may cut some computing time.
+
+```{r}
+if(file.exists(str_c("./miceObj.rds"))){
+  miceObj_load <- readRDS("./miceObj.rds")
+} else {
+  miceObj <- miceRanger(
+    icu_cohort2,
+    m = 3,
+    max.depth = 10,
+    returnModels = FALSE,
+    verbose = FALSE
+)
+  miceObj %>%
+  saveRDS(str_c("./miceObj.rds"))
+}
+
+rm(icu_cohort2)
+```
+
+5. Make imputation diagnostic plots and explain what they mean.  
+
+**Figure 1: Density Plot of the Imputed and Original Data**    
+```{r Fig1_Density_Imputed_vs_Original}
+miceObj_load <- readRDS("./miceObj.rds")
+plotDistributions(miceObj_load, vars = 'allNumeric')
+
+```
+  
+The distribution plot above shows the original and imputed data distributions. Based on the plot the distributions look similar between the original and the imputed values.    
+
+**Figure 2: Correlations Plot of the Imputed and Original Data**  
+```{r Fig2_CorrPlot_Imputed_vs_Original}
+plotCorrelations(miceObj_load, vars = 'allNumeric')
+```
+  
+The correlation plot above shows convergence of the imputed variables. In this case the imputation has converged.  
+
+**Figure 3: Convergence Plot of the Imputed and Original Data**
+```{r Fig3_VarConvergence_Imputed_vs_Original}
+plotVarConvergence(miceObj_load, vars = 'allNumeric',
+                   font.label = list( color = c("black", "blue", "red")))
+```
+  
+The variable convergence plot above depicts the iterations at which the imputation converged. For some variables like hematocrit and chloride, there seem to be larger variance at 5th iteration.  
+
+**Figure 4: Model Error Plot of the Imputed and Original Data**
+```{r Fig4_ModelError_Imputed_vs_Original}
+plotModelError(miceObj_load, vars = 'allNumeric')
+```
+The degree of accuracy is not great in the imputed data sets. However, for the sake of time I will chose one of these data sets for further analyses. In an ideal scenario, I would be able to go back, check my input data set again and improve the parameter selection for `miceRanger` to get better quality imputations. I hope to work on this part more during the Spring Break.  
+
+
+6. Choose one of the imputed data sets to be used in Q2. This is **not** a good idea to use just one imputed data set or to average multiple imputed data sets. Explain in a couple of sentences what the correct Multiple Imputation strategy is.  
+
+```{r}
+average_error_at_It5 <- data.frame(matrix(NA,    # Create empty data frame
+                          nrow = 3,
+                          ncol = 12))
+
+for(i in 1:length(average_error_at_It5)){
+  average_error_at_It5[,i] <- rbind(
+    miceObj_load$allError$Dataset_1[[i+3]][5], 
+    miceObj_load$allError$Dataset_2[[i+3]][5],
+    miceObj_load$allError$Dataset_3[[i+3]][5]
+  )
+}
+
+# install.packages("fastDummies")
+library(fastDummies)
+
+imputed_list <- completeData(miceObj_load)
+
+# head(data_list[[1]], 10)
+imputed_1 <- dummy_cols(imputed_list[1],
+                        remove_first_dummy = T,
+                        remove_selected_columns = T)
+
+imputed_2 <- dummy_cols(imputed_list[2],
+                        remove_first_dummy = T,
+                        remove_selected_columns = T)
+
+imputed_3 <- dummy_cols(imputed_list[3],
+                        remove_first_dummy = T,
+                        remove_selected_columns = T)
+rm(miceObj_load)
+
+imput_cols <- colnames(imputed_2)
+imput_cols <- str_sub(imput_cols, start = 17)
+imput_cols[19:26] <- c("AT_emergency", "AT_observation", "AT_elective", 
+                       "AT_eu_observation", "AT_ew_emergency", 
+                       "AT_observ_admit", "AT_surgical", "AT_urgent")
+imput_cols[27:36] <- c("ALoc_clinRef", "ALoc_ER", "ALoc_Unknown", 
+                       "ALoc_fromPsych", "ALoc_fromPACU", "ALoc_docRef", 
+                       "ALoc_procSite", "ALoc_fromHosp", "ALoc_fromSNF",
+                       "ALoc_walkIn")
+imput_cols[55:61] <- c("ethn_Asian", "ethn_Black", "ethn_Latinx", "ethn_Other",
+                       "ethn_NotObtained", "ethn_Unknown", "ethn_White")
+
+colnames(imputed_1) <- imput_cols
+colnames(imputed_2) <- imput_cols
+colnames(imputed_3) <- imput_cols
+
+imputed_1 <- as_tibble(imputed_1) %>% 
+  pivot_longer(c("ethn_NotObtained", "ethn_Unknown"), names_to = "ethnicity",
+                  values_to = "ethn_NotKnown") %>% 
+  select(-ethnicity)
+
+imputed_2 <- as_tibble(imputed_2) %>% 
+  pivot_longer(c("ethn_NotObtained", "ethn_Unknown"), names_to = "ethnicity",
+                  values_to = "ethn_NotKnown") %>% 
+  select(-ethnicity)
+
+imputed_3 <- as_tibble(imputed_3) %>% 
+  pivot_longer(c("ethn_NotObtained", "ethn_Unknown"), names_to = "ethnicity",
+                  values_to = "ethn_NotKnown") %>% 
+  select(-ethnicity)
+```
+
+**Figure 5: First Imputed Data Set**
+```{r Fig5_imputed_data1}
+as_tibble(imputed_1) %>%
+  pivot_longer(c("los", "hospital_expire_flag", "anchor_age", "magnesium",
+                 "hematocrit", "potassium", "sodium", "wbc", "bicarbonate",
+                 "calcium", "chloride", "creatinine", "glucose",
+                 "temperature_fahrenheit", "respiratory_rate", "heart_rate" ,
+                 "age_hadm"), names_to = "Physio_chars",
+               values_to = "Physio_vals") %>%
+ggplot(aes(x = thirty_day_mort, y = Physio_vals)) +
+geom_point(alpha = 0.5) +
+geom_boxplot(aes(color = thirty_day_mort)) +
+labs( x = "Physiologic Measure", y = "Thirty Day Mortality",
+        color = "Thirty Day Mortality") +
+scale_color_manual(values = c("royalblue", "brown1")) +
+theme_bw() +
+facet_wrap(~Physio_chars,  ncol = 6)
+```
+
+
+**Figure 6: Second Imputed Data Set**
+```{r Fig6_imputed_data2}
+as_tibble(imputed_2) %>%
+  pivot_longer(c("los", "hospital_expire_flag", "anchor_age", "magnesium",
+                 "hematocrit", "potassium", "sodium", "wbc", "bicarbonate",
+                 "calcium", "chloride", "creatinine", "glucose",
+                 "temperature_fahrenheit", "respiratory_rate", "heart_rate" ,
+                 "age_hadm"), names_to = "Physio_chars",
+               values_to = "Physio_vals") %>%
+ggplot(aes(x = thirty_day_mort, y = Physio_vals)) +
+geom_point(alpha = 0.5) +
+geom_boxplot(aes(color = thirty_day_mort)) +
+labs( x = "Physiologic Measure", y = "Thirty Day Mortality",
+        color = "Thirty Day Mortality") +
+scale_color_manual(values = c("royalblue", "brown1")) +
+theme_bw() +
+facet_wrap(~Physio_chars,  ncol = 6)
+```
+
+**Figure 7: Third Imputed Data Set**
+```{r Fig7_imputed_data3}
+as_tibble(imputed_3) %>%
+  pivot_longer(c("los", "hospital_expire_flag", "anchor_age", "magnesium",
+                 "hematocrit", "potassium", "sodium", "wbc", "bicarbonate",
+                 "calcium", "chloride", "creatinine", "glucose",
+                 "temperature_fahrenheit", "respiratory_rate", "heart_rate" ,
+                 "age_hadm"), names_to = "Physio_chars",
+               values_to = "Physio_vals") %>%
+ggplot(aes(x = thirty_day_mort, y = Physio_vals)) +
+geom_point(alpha = 0.5) +
+geom_boxplot(aes(color = thirty_day_mort)) +
+labs( x = "Physiologic Measure", y = "Thirty Day Mortality",
+        color = "Thirty Day Mortality") +
+scale_color_manual(values = c("royalblue", "brown1")) +
+theme_bw() +
+facet_wrap(~Physio_chars,  ncol = 6)
+```
+
+
+   **Solution:**   
+The correct imputation strategy would be to average the imputed data sets using the 
+`completeData` function from the `miceRanger` package. For the purposes of the class project, I quickly calculated the average error values at 5th iteration. Additionally, I plotted the imputed values to visually compare the spread in each imputed variable. I chose the 2nd imputed data set since it had better error (OOB) values across the imputed variables, and had similar spread to the rest based on the box plots. Based on the box plots it also became apparent that using `glucose` or `white blood cell count` as features in the modeling step would not be a great idea, since these values can reach non-physiologic levels. Even though `heart rate` variable has a non-physiologic value, the overall mean is not affected much due to large sample size, so I will include this variable in the future analyses.
+
+```{r}
+rm(imputed_1)
+rm(imputed_3)
+```
+
+## Q2. Predicting 30-day mortality
+
+Develop at least two analytic approaches for predicting the 30-day mortality of patients admitted to ICU using demographic information (gender, age, marital status, ethnicity), first lab measurements during ICU stay, and first vital measurements during ICU stay. For example, you can use (1) logistic regression (`glm()` function in base R or keras), (2) logistic regression with lasso penalty (glmnet or keras package), (3) random forest (randomForest package), or (4) neural network (keras package).
+
+```{r}
+library(caret)
+library(pROC)
+library(ggthemes)
+library(data.table)
+```
+
+
+  **Method 1: Generalized Linear Model**  
+  
+1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+```{r}
+set.seed(123)
+training <- sample_frac(imputed_2, 0.8)
+
+#rest set as testing
+train_ids <- as.numeric(rownames(training))
+testing <- imputed_2[-train_ids, ]
+```
+
+  
+2. Train the models using the training set.  
+```{r}
+log_train <- glm(
+              training$thirty_day_mort~.,
+              binomial(link = 'logit'), data = training)
+
+#overall training results
+summary(log_train)
+```
+
+3. Compare model prediction performance on the test set.
+```{r}
+# Test sample
+testing$logit_prob <- predict(log_train, testing, type = "response")
+
+# colnames(testing)
+
+# adding in the actual values
+testing <- testing %>% 
+  mutate(model_pred = (logit_prob > 0.95), 
+                         mortality = thirty_day_mort)
+
+# model accuracy
+testing <- testing %>% 
+  mutate(accuracy_denom = (model_pred == thirty_day_mort)) %>% 
+  mutate(precision_denom = ifelse((model_pred == TRUE & 
+                                   thirty_day_mort == TRUE), 1, 0))
+  
+# Overall percent accurace  
+glm_accuracy <- 100 * sum(testing$accuracy_denom)/nrow(testing)
+glm_precision <- 100 * sum(testing$precision_denom)/
+  length(testing$model_pred[which(testing$model_pred ==TRUE)])
+```
+The accuracy of the generalized linear model is `r format(round(glm_accuracy, 3), nsmall = 2)`%
+and the precision is `r format(round(glm_precision, 3), nsmall = 2)`%. These both seem quite 
+impressive. 
+
+**Method 2: Logistic regression with Lasso Penalty**  
+ 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+```{r}
+library(glmnet)
+
+set.seed(123)
+training <- sample_frac(imputed_2, 0.8)
+training_x <- training %>%
+  select(los, hospital_expire_flag, hematocrit, sodium, bicarbonate, calcium, 
+         chloride, creatinine, respiratory_rate, heart_rate, age_hadm) %>%
+  as.matrix()
+
+training_y <- training %>%
+  select(thirty_day_mort) %>% 
+  mutate(mortality = if_else(training$thirty_day_mort==T, 1, 0)) %>% 
+  select(-thirty_day_mort) %>% 
+  as.matrix()
+
+train_ids <- as.numeric(rownames(training))
+testing <- imputed_2[-train_ids, ]
+
+x_test <- testing %>% 
+  select(los, hospital_expire_flag, hematocrit, sodium, bicarbonate, calcium, 
+         chloride, creatinine, respiratory_rate, heart_rate, age_hadm) %>% 
+  as.matrix()
+
+y_test <- testing %>% 
+  select(thirty_day_mort) %>% 
+  mutate(mortality = if_else(testing$thirty_day_mort == T, 1, 0)) %>% 
+  select(-thirty_day_mort) %>% 
+  as.matrix()
+
+rm(training)
+```
+
+
+ 2. Train the models using the training set.  
+```{r}
+set.seed(123)
+#parameter tuning
+lasso_model_cv <- cv.glmnet(training_x, as.matrix(training_y), 
+                            alpha = 1, family = "binomial")
+#str(lasso_model_cv)
+plot(lasso_model_cv)
+
+
+#Future Directions: further optimze lambda:
+# lambdas <- seq(from = lasso_model_cv$lambda.min, to = 10^3, by = 1.5)
+
+# If I had more time I chose standardize = T as there are multiple variables 
+# with different units
+# lasso_model <- glmnet(training_x, as.matrix(training_y), standardize = F,
+#                       family = "binomial", alpha = 1, 
+#                       s = "lambda.1se")
+
+```
+
+3. Compare model prediction performance on the test set.
+```{r}
+lasso_prob <- predict(lasso_model_cv, s = "lambda.1se", 
+                      newx = x_test)
+y_hat <- ifelse(lasso_prob > 0.5, 1, 0)
+# head(y_hat)
+table(y_hat, y_test) 
+lasso_accuracy = 100 * (36980 + 5048)/(36980 + 5048 + 328 + 164)
+lasso_precision = 100 * (5048)/(5048 + 328)
+```
+  
+  Lasso accuracy is `r format(round(lasso_accuracy, 3), nsmall = 2)`% which is higher than the regular GLM accuracy of `r format(round(glm_accuracy, 3), nsmall = 2)`% calculated above. However, Lasso precision is `r format(round(lasso_precision, 3), nsmall = 2)`%, which is lower than the GLM precision of `r format(round(glm_precision, 3), nsmall = 2)`% calculated earlier.  
+
+
+
+ **Method 3: Neural Network**  
+ Did not have time to complete. Will work on this over the spring break.
+ 
+ 1. Partition data into 80% training set and 20% test set. Stratify partitioning according the 30-day mortality status.
+```{r}
+# detach("package:miceRanger", unload = TRUE)
+# set.seed(123)
+# training <- sample_frac(imputed_2, 0.8)
+# training_x <- training %>%
+#   select(-thirty_day_mort) %>% 
+#   as.matrix()
+#   
+# training_y <- training %>% 
+#   select(thirty_day_mort)
+# 
+# rm(training)
+```
+
+
+ 2. Train the models using the training set.  
+```{r}
+#TODO: NEED TO UNCOMMENT THESE WHEN SUBMITTING:
+
+# library(reticulate)
+# virtualenv_create("r-reticulate")
+# library(keras)
+# install_keras(tensorflow )
+# library(tensorflow)
+# library(keras)
+# 
+# set.seed(123)
+# # neuro_train 
+# neuralNet_model <- keras::keras_model_sequential() %>% 
+#   layer_dense(units = 10, activation = 'relu', input_shape = c(28)) %>% 
+#   layer_dropout(rate = 0.4) %>% 
+#   layer_dense(units = 7, activation = 'relu') %>% 
+#   layer_dropout(rate = 0.3) %>% 
+#   layer_dense(input_shape = c(28), 
+#               units = 1, activation = 'sigmoid')
+# 
+# neuralNet_model %>% compile(
+#   loss = 'binary_crossentropy',
+#   optimizer = optimizer_rmsprop(),
+#   metrics = c('accuracy'))
+# summary(neuralNet_model)
+# 
+# history <- neuralNet_model %>% 
+#   fit(
+#     x = training_x,
+#     y = training_y,
+#     epochs = 20,
+#     batch_size = 60,
+#     validation_split = 0.2
+#   )
+
+
+
+
+```
+
+
+
+
+
+
+
